@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  mcp-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${MCP_HUB_PORT:-8000}:8000"
+    environment:
+      - MCP_HUB_API_KEY=${MCP_HUB_API_KEY:-default-api-key}
+      - MCP_HUB_LOG_LEVEL=${MCP_HUB_LOG_LEVEL:-info}
+    volumes:
+      # Development: bind mount source code for hot reload
+      - ./src:/app/src:ro
+      # Configuration files
+      - ./config:/app/config:ro
+      # Logs directory
+      - ./logs:/app/logs
+    networks:
+      - mcp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Override for development with config file and hot reload
+    # Comment out the command below and use the alternative command for single server mode
+    command: [
+      "--config", "/app/config/config.json",
+      "--hot-reload",
+      "--port", "8000",
+      "--api-key", "${MCP_HUB_API_KEY:-default-api-key}",
+      "--log-level", "${MCP_HUB_LOG_LEVEL:-info}"
+    ]
+    
+    # Alternative command for single MCP server mode:
+    # Uncomment and modify the line below for running a single MCP server
+    # command: ["--port", "8000", "--api-key", "${MCP_HUB_API_KEY:-default-api-key}", "--", "uvx", "mcp-server-time", "--local-timezone=America/New_York"]
+
+networks:
+  mcp-network:
+    driver: bridge
+
+# Production override example - uncomment and modify as needed
+# To use this for production, create a docker-compose.prod.yml file and run:
+# docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# version: '3.8'
+# services:
+#   mcp-hub:
+#     restart: always
+#     environment:
+#       - MCP_HUB_API_KEY=${MCP_HUB_API_KEY}
+#       - MCP_HUB_LOG_LEVEL=warning
+#     volumes:
+#       # Production: only bind config and logs, no source code
+#       - ./config:/app/config:ro
+#       - ./logs:/app/logs
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '2.0'
+#           memory: 1G
+#         reservations:
+#           cpus: '0.5'
+#           memory: 256M

@@ -1,0 +1,37 @@
+version: '3.8'
+
+# Production override for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  mcp-hub:
+    restart: always
+    environment:
+      # Override development settings for production
+      - MCP_HUB_LOG_LEVEL=warning
+    volumes:
+      # Production: only bind config and logs, no source code mounting
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+      # Remove src volume mount for production
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    # Additional production-specific health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health", "--max-time", "5"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # Add production logging driver if needed
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"

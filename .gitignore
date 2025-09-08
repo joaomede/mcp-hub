@@ -8,4 +8,25 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Configuration files (use examples instead)
 config.json
+.env
+
+# Logs
+logs/*.log
+logs/*.txt
+!logs/.gitkeep
+
+# Docker volumes
+docker-volumes/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
