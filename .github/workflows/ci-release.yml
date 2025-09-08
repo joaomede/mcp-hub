@@ -16,19 +16,38 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.11.10'
           check-latest: true
+          cache: 'pip'
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libffi-dev libssl-dev python3-dev
       - name: Diagnostic - python & pip
         run: |
+          echo "=== Python Environment Debugging ==="
           python --version
-          python -c "import sys; print(sys.executable)"
+          python -c "import sys; print(f'Python executable: {sys.executable}')"
+          python -c "import sys; print(f'Python version info: {sys.version_info}')"
           pip --version
           which python
-          ls -la /opt/hostedtoolcache/Python/
+          which python3
+          which python3.11
+          echo "=== Available Python in toolcache ==="
+          ls -la /opt/hostedtoolcache/Python/ || echo "No toolcache found"
+          echo "=== Environment PATH ==="
+          echo $PATH
+          echo "=== Force Python 3.11 usage ==="
+          export PATH="/opt/hostedtoolcache/Python/3.11.10/x64/bin:$PATH"
+          python --version
+
+      - name: Force Python 3.11 in PATH
+        run: |
+          echo "Setting up Python 3.11 path priority"
+          PYTHON_PATH=$(which python)
+          echo "Current Python: $PYTHON_PATH"
+          # Add the specific Python 3.11 path to the front of PATH
+          echo "/opt/hostedtoolcache/Python/3.11.10/x64/bin" >> $GITHUB_PATH
 
       - name: Install Poetry (if needed)
         run: |
