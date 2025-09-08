@@ -1,43 +1,22 @@
-
-# Changelog
-## [Unreleased] - 2025-09-08
-
-### Added
-
-- ✅ HTTP session management for MCP over HTTP: sessions are tracked per client and marked as initialized after an `initialize` call. Pass the session via `x-session-id` header or `?sessionId=`; if omitted, the hub generates one and returns it in the `initialize` response.
-- ✅ n8n MCP Client compatibility: the HTTP proxy now handles MCP JSON-RPC methods (`initialize`, `tools/list`, `tools/call`) in the expected order and returns JSON-RPC–shaped errors when preconditions aren’t met.
-- 🧭 Documentation: README updates describing the new compatibility and a Mermaid diagram explaining the proxy flow end-to-end.
-
-### Changed
-
-- 🔒 `tools/list` and `tools/call` over HTTP now require a prior `initialize` for the same session, aligning behavior with MCP-compliant clients and servers.
-- 🧹 The HTTP proxy tolerates `initialize` from HTTP clients, marking the session as ready without impacting the underlying stdio handshake.
-
-### Fixed
-
-- 🛠️ **MCP Handshake Compliance**: The hub now always calls `initialize()` on MCP sub-app startup, ensuring compatibility with Python FastMCP servers and preventing handshake errors.
-- 🧹 **MCP Proxy Argument Handling**: Patched the proxy to omit empty/null `arguments` in `tools/call` requests, improving compatibility with strict servers.
-- 📝 **Type Hints in Config Watcher**: Fixed type hints for async config reload callbacks to use `Awaitable`, preventing runtime errors on hot reload.
-- 🧪 **Integration Test & Config**: Integration test now dynamically discovers all servers from `test_config.json` and mounts the host repo for the git server; config updated to support official memory, filesystem, time, and git servers.
-- 🏷️ **uv.lock Correction**: Fixed editable package name in `uv.lock` to `mcp-hub` for proper dependency resolution.
-- 🐳 **Compose cleanup**: Removed unsupported `--log-level` flag from compose command.
-
-### Removed
-
-- 🧹 Removed debug scripts, temporary logs, and test config artifacts from the repository.
-
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### [1.0.1](https://github.com/joaomede/mcp-hub/compare/v0.0.17...v1.0.1) (2025-09-08)
+
+
+### Features
+
+* **docs:** add demo changelog entry ([dd95b3f](https://github.com/joaomede/mcp-hub/commit/dd95b3f4b6164a04f3c1cd36c739c6e823d664be))
+* **proxy:** return MCP-compliant envelopes and include sessionId in initialize; derive stable anon session for n8n; tests: call initialize before tools/list ([5247f46](https://github.com/joaomede/mcp-hub/commit/5247f46e5ba628e98ff94e268f6978c8f376839d))
+* **proxy:** tolerate 'initialize' method in HTTP proxy for n8n and similar clients ([6fc0bb3](https://github.com/joaomede/mcp-hub/commit/6fc0bb3e244143f400c2b065b2161325aec14e30))
+
+
+### Bug Fixes
+
+* **compose:** remove --log-level from command (not supported by mcp-hub CLI) ([9f8ed75](https://github.com/joaomede/mcp-hub/commit/9f8ed75f91b71bf314a8dc80ed6d4951850f1802))
+* handshake, proxy, and test improvements\n\n- Always call initialize() on MCP sub-app startup for FastMCP compatibility\n- Patch proxy to omit empty/null arguments in tools/call\n- Fix config watcher type hints for async reload\n- Integration test: dynamic server discovery, git repo mount\n- Update test_config.json for all official servers\n- Fix editable package name in uv.lock\n- Remove debug/test artifacts ([c10f5c5](https://github.com/joaomede/mcp-hub/commit/c10f5c5c2df29f503cc0aae041677b063f66ca31))
+* **proxy:** tolerate notifications/initialized as no-op, return JSON-RPC error for unknown methods, never 500 on HTTPException ([16bf431](https://github.com/joaomede/mcp-hub/commit/16bf431cb989f6f97014c26f8ece04084665124c))
 
 ## [1.0.0] - 2025-09-07
 

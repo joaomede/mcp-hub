@@ -1,0 +1,24 @@
+{
+  "name": "mcp-hub",
+  "version": "1.0.1",
+  "description": "MCP Hub - Pure stdio MCP Gateway",
+  "scripts": {
+    "commit": "cz",
+    "changelog": "standard-version --release-as patch",
+    "release": "standard-version",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "@commitlint/cli": "^18.0.0",
+    "@commitlint/config-conventional": "^18.0.0",
+    "husky": "^8.0.0",
+    "standard-version": "^9.5.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}
