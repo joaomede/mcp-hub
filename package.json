@@ -1,6 +1,6 @@
 {
   "name": "mcp-hub",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "MCP Hub - Pure stdio MCP Gateway",
   "scripts": {
     "commit": "cz",
