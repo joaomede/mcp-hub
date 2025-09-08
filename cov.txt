@@ -1,0 +1,131 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-8.4.2, pluggy-1.6.0 -- /bin/python3
+cachedir: .pytest_cache
+rootdir: /home/joao/Downloads/project/forks/mcp-hub
+configfile: pyproject.toml
+plugins: anyio-4.10.0, asyncio-1.1.0, cov-6.3.0
+asyncio: mode=strict, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 52 items
+
+tests/unit/test_auth.py::test_verify_api_key_invalid PASSED              [  1%]
+tests/unit/test_auth.py::test_verify_api_key_valid PASSED                [  3%]
+tests/unit/test_auth_jwt.py::test_create_and_decode_token PASSED         [  5%]
+tests/unit/test_auth_jwt.py::test_create_token_with_expiry PASSED        [  7%]
+tests/unit/test_auth_jwt.py::test_decode_token_invalid PASSED            [  9%]
+tests/unit/test_auth_middleware.py::test_apikeymiddleware_invalid_bearer PASSED [ 11%]
+tests/unit/test_auth_middleware.py::test_apikeymiddleware_valid_bearer PASSED [ 13%]
+tests/unit/test_auth_middleware.py::test_apikeymiddleware_invalid_basic PASSED [ 15%]
+tests/unit/test_auth_middleware.py::test_apikeymiddleware_valid_basic PASSED [ 17%]
+tests/unit/test_auth_middleware.py::test_apikeymiddleware_unsupported_auth PASSED [ 19%]
+tests/unit/test_auth_middleware.py::test_apikeymiddleware_missing_auth PASSED [ 21%]
+tests/unit/test_auth_middleware.py::test_apikeymiddleware_invalid_basic_base64 PASSED [ 23%]
+tests/unit/test_auth_middleware.py::test_apikeymiddleware_invalid_basic_no_colon PASSED [ 25%]
+tests/unit/test_config_watcher.py::test_config_watcher_triggers_reload PASSED [ 26%]
+tests/unit/test_config_watcher_errors.py::test_config_watcher_invalid_json PASSED [ 28%]
+tests/unit/test_config_watcher_errors.py::test_config_watcher_file_not_found PASSED [ 30%]
+tests/unit/test_graceful_shutdown.py::test_graceful_shutdown_sets_event PASSED [ 32%]
+tests/unit/test_graceful_shutdown.py::test_graceful_shutdown_track_task PASSED [ 34%]
+tests/unit/test_graceful_shutdown_extra.py::test_graceful_shutdown_unexpected_signal PASSED [ 36%]
+tests/unit/test_graceful_shutdown_extra.py::test_graceful_shutdown_track_task_done FAILED [ 38%]
+tests/unit/test_init.py::test_env_dict_parsing PASSED                    [ 40%]
+tests/unit/test_main.py::test_validate_server_config_valid PASSED        [ 42%]
+tests/unit/test_main.py::test_validate_server_config_missing_command PASSED [ 44%]
+tests/unit/test_main_config_file.py::test_load_config_empty_file PASSED  [ 46%]
+tests/unit/test_main_config_file.py::test_load_config_permission_denied PASSED [ 48%]
+tests/unit/test_main_config_types.py::test_validate_server_config_invalid_types[None] PASSED [ 50%]
+tests/unit/test_main_config_types.py::test_validate_server_config_invalid_types[123] PASSED [ 51%]
+tests/unit/test_main_config_types.py::test_validate_server_config_invalid_types[string] PASSED [ 53%]
+tests/unit/test_main_config_types.py::test_validate_server_config_invalid_types[server_cfg3] PASSED [ 55%]
+tests/unit/test_main_config_types.py::test_validate_server_config_invalid_types[server_cfg4] PASSED [ 57%]
+tests/unit/test_main_config_types.py::test_validate_server_config_invalid_types[server_cfg5] PASSED [ 59%]
+tests/unit/test_main_config_types.py::test_validate_server_config_invalid_types[server_cfg6] PASSED [ 61%]
+tests/unit/test_main_handlers.py::test_health_check PASSED               [ 63%]
+tests/unit/test_main_handlers.py::test_sub_app_root_returns_405 PASSED   [ 65%]
+tests/unit/test_main_handlers.py::test_sub_app_post_missing_session PASSED [ 67%]
+tests/unit/test_main_http_filter.py::test_http_request_filter FAILED     [ 69%]
+tests/unit/test_main_mount_prefixes.py::test_mount_unmount_multiple_prefixes PASSED [ 71%]
+tests/unit/test_main_mount_unmount.py::test_mount_and_unmount_servers PASSED [ 73%]
+tests/unit/test_main_mount_unmount.py::test_create_sub_app_with_api_key PASSED [ 75%]
+tests/unit/test_main_proxy.py::test_proxy_requires_initialize PASSED     [ 76%]
+tests/unit/test_main_proxy_errors.py::test_proxy_method_not_found PASSED [ 78%]
+tests/unit/test_main_reload.py::test_load_config_no_mcpservers PASSED    [ 80%]
+tests/unit/test_main_reload.py::test_load_config_file_not_found PASSED   [ 82%]
+tests/unit/test_main_reload.py::test_load_config_invalid_json PASSED     [ 84%]
+tests/unit/test_main_reload.py::test_reload_config_handler_no_change PASSED [ 86%]
+tests/unit/test_main_reload.py::test_reload_config_handler_add_remove PASSED [ 88%]
+tests/unit/test_main_reload_partial.py::test_reload_config_handler_partial_changes FAILED [ 90%]
+tests/unit/test_main_validation.py::test_validate_server_config_valid PASSED [ 92%]
+tests/unit/test_main_validation.py::test_validate_server_config_missing_command PASSED [ 94%]
+tests/unit/test_main_validation.py::test_load_config_valid PASSED        [ 96%]
+tests/unit/test_main_validation.py::test_load_config_invalid PASSED      [ 98%]
+tests/unit/test_utils_main.py::test_logger_exists PASSED                 [100%]
+
+=================================== FAILURES ===================================
+____________________ test_graceful_shutdown_track_task_done ____________________
+
+    @pytest.mark.asyncio
+    async def test_graceful_shutdown_track_task_done():
+        shutdown = GracefulShutdown()
+        async def dummy():
+            return 42
+        task = asyncio.create_task(dummy())
+        await task
+        shutdown.track_task(task)
+        # Task já finalizada deve ser removida imediatamente
+>       assert task not in shutdown.tasks
+E       AssertionError: assert <Task finished name='Task-74' coro=<test_graceful_shutdown_track_task_done.<locals>.dummy() done, defined at /home/joao/Downloads/project/forks/mcp-hub/tests/unit/test_graceful_shutdown_extra.py:18> result=42> not in {<Task finished name='Task-74' coro=<test_graceful_shutdown_track_task_done.<locals>.dummy() done, defined at /home/joao/Downloads/project/forks/mcp-hub/tests/unit/test_graceful_shutdown_extra.py:18> result=42>}
+E        +  where {<Task finished name='Task-74' coro=<test_graceful_shutdown_track_task_done.<locals>.dummy() done, defined at /home/joao/Downloads/project/forks/mcp-hub/tests/unit/test_graceful_shutdown_extra.py:18> result=42>} = <mcp_hub.main.GracefulShutdown object at 0x7f7e6bd7ae00>.tasks
+
+tests/unit/test_graceful_shutdown_extra.py:24: AssertionError
+___________________________ test_http_request_filter ___________________________
+
+    def test_http_request_filter():
+        # Instancia o filtro
+        f = None
+        for name, obj in mcp_logging.__dict__.items():
+            if name == "HTTPRequestFilter":
+                f = obj
+                break
+>       assert f is not None
+E       assert None is not None
+
+tests/unit/test_main_http_filter.py:18: AssertionError
+__________________ test_reload_config_handler_partial_changes __________________
+
+    @pytest.mark.asyncio
+    async def test_reload_config_handler_partial_changes():
+        app = FastAPI()
+        app.state.config_data = {"mcpServers": {"srv1": {"command": "echo", "args": ["foo"]}, "srv2": {"command": "echo", "args": ["bar"]}}}
+        app.state.cors_allow_origins = ["*"]
+        app.state.api_key = None
+        app.state.strict_auth = False
+        app.state.api_dependency = None
+        app.state.connection_timeout = 5
+        app.state.lifespan = None
+        app.state.path_prefix = "/"
+        # Remove srv1, mantém srv2, adiciona srv3
+        new_config = {"mcpServers": {"srv2": {"command": "echo", "args": ["bar"]}, "srv3": {"command": "echo", "args": ["baz"]}}}
+        await reload_config_handler(app, new_config)
+        paths = [str(route.path) for route in app.router.routes if hasattr(route, 'path')]
+>       assert any("/srv2/mcp" in p for p in paths)
+E       assert False
+E        +  where False = any(<generator object test_reload_config_handler_partial_changes.<locals>.<genexpr> at 0x7f7e6e386dc0>)
+
+tests/unit/test_main_reload_partial.py:21: AssertionError
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.10.12-final-0 _______________
+
+Name                                  Stmts   Miss Branch BrPart  Cover   Missing
+---------------------------------------------------------------------------------
+src/mcp_hub/__init__.py                  46     35     24      1    17%   73-126, 149
+src/mcp_hub/main.py                     381    214    120      8    44%   53, 124->127, 181-185, 217, 231-233, 256-261, 328, 332-334, 347-351, 357-361, 366-473, 483-694
+src/mcp_hub/utils/auth.py                61      4     18      2    92%   24, 51, 100-101
+src/mcp_hub/utils/config_watcher.py     101     26     18      1    71%   41, 45-56, 60-71, 90-91, 108, 111-112, 134-136, 158-159, 162
+src/mcp_hub/utils/main.py                 2      0      0      0   100%
+---------------------------------------------------------------------------------
+TOTAL                                   591    279    180     12    51%
+=========================== short test summary info ============================
+FAILED tests/unit/test_graceful_shutdown_extra.py::test_graceful_shutdown_track_task_done
+FAILED tests/unit/test_main_http_filter.py::test_http_request_filter - assert...
+FAILED tests/unit/test_main_reload_partial.py::test_reload_config_handler_partial_changes
+========================= 3 failed, 49 passed in 4.75s =========================

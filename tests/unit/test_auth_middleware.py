@@ -79,3 +79,30 @@ def test_apikeymiddleware_missing_auth():
     resp = client.get("/test")
     assert resp.status_code == 401
     assert resp.json()["detail"] == "Missing or invalid Authorization header"
+
+# Testa formato inválido de Basic (base64 inválido)
+def test_apikeymiddleware_invalid_basic_base64():
+    app = FastAPI()
+    app.add_middleware(APIKeyMiddleware, api_key="mykey")
+    @app.get("/test")
+    async def test():
+        return {"ok": True}
+    client = TestClient(app)
+    resp = client.get("/test", headers={"Authorization": "Basic !!!notbase64!!!"})
+    assert resp.status_code == 401
+    assert resp.json()["detail"] == "Invalid Basic Authentication format"
+
+# Testa formato inválido de Basic (sem ':')
+def test_apikeymiddleware_invalid_basic_no_colon():
+    import base64
+    app = FastAPI()
+    app.add_middleware(APIKeyMiddleware, api_key="mykey")
+    @app.get("/test")
+    async def test():
+        return {"ok": True}
+    client = TestClient(app)
+    creds = base64.b64encode(b"no_colon").decode()
+    resp = client.get("/test", headers={"Authorization": f"Basic {creds}"})
+    assert resp.status_code == 401
+    assert resp.json()["detail"] == "Invalid Basic Authentication format"
+

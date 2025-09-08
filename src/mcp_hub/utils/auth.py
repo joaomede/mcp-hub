@@ -110,6 +110,16 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
 #     encoded_jwt = jwt.encode(payload, SESSION_SECRET, algorithm=ALGORITHM)
 #     return encoded_jwt
+SESSION_SECRET = "testsecret"  # Para testes
+
+def create_token(data: dict, expires_delta: Union[timedelta, None] = None) -> str:
+    payload = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+        payload.update({"exp": expire})
+    encoded_jwt = jwt.encode(payload, SESSION_SECRET, algorithm=ALGORITHM)
+    return encoded_jwt
+
 
 
 # def decode_token(token: str) -> Optional[dict]:
@@ -118,3 +128,9 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 #         return decoded
 #     except Exception:
 #         return None
+def decode_token(token: str) -> Optional[dict]:
+    try:
+        decoded = jwt.decode(token, SESSION_SECRET, algorithms=[ALGORITHM])
+        return decoded
+    except Exception:
+        return None
