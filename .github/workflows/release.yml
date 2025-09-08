@@ -1,0 +1,47 @@
+name: Release & Changelog
+
+on:
+  push:
+    branches: [main]
+    # Gera changelog e release a cada push na main
+  pull_request:
+    types: [closed]
+    branches: [main]
+    # Opcional: pode rodar apenas em merge de PRs
+
+jobs:
+  changelog-release:
+    if: github.event_name == 'push' || (github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # necessário para tags e changelog
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate changelog and bump version
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          npx standard-version --release-as patch
+
+      - name: Push changes and tags
+        run: |
+          git push --follow-tags origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
