@@ -20,7 +20,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libffi-dev python3-dev
+          sudo apt-get install -y build-essential libffi-dev libssl-dev python3-dev
       - name: Diagnostic: python & pip
         run: |
           python --version
@@ -29,22 +29,23 @@ jobs:
 
       - name: Install Poetry (if needed)
         run: |
-          pip install --upgrade pip setuptools wheel
-          pip install poetry || true
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install poetry || true
 
       - name: Install project (editable)
         run: |
-          pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip setuptools wheel
           # install package in editable mode so tests run against workspace
-          pip install -e .
+          python -m pip install -e .
 
       - name: Install test dependencies
         run: |
-          pip install --upgrade pip
-          pip install pytest pytest-asyncio pytest-cov fastapi starlette watchdog passlib typer uvicorn python-dotenv pyjwt mcp
+          python -m pip install --upgrade pip
+          # project dependencies are installed by the editable install above; only install test/runtime tools here
+          python -m pip install pytest pytest-asyncio pytest-cov
       - name: Run unit tests with coverage
         run: |
-          PYTHONPATH=src pytest --cov=src/mcp_hub tests/unit --cov-report=term-missing -v
+          PYTHONPATH=src python -m pytest --cov=src/mcp_hub tests/unit --cov-report=term-missing -v
 
   release:
     needs: test
