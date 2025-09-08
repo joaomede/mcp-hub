@@ -70,19 +70,19 @@ docker run --rm -p 8000:8000 mcp-hub:latest --api-key "secret" -- your_mcp_serve
 
 **Docker Compose (Recommended for Development & Production):**
 
-Para subir em qualquer ambiente (dev ou produção):
+To bring up in any environment (dev or production):
 
 ```bash
-# Subir ambiente (foreground, logs no terminal)
+# Start services (foreground, logs in terminal)
 docker-compose up --build
 
-# Ou para rodar em background (produção)
+# Or run in background (production)
 docker-compose up -d --build
 ```
 
-> Defina a variável MCP_HUB_API_KEY no seu `.env` para proteger a API em produção.
+> Set the `MCP_HUB_API_KEY` variable in your `.env` to secure the API in production.
 
-Veja [DOCKER.md](DOCKER.md) para instruções detalhadas.
+See [DOCKER.md](DOCKER.md) for detailed instructions.
 
 Tip: copy the example configuration before starting services:
 

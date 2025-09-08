@@ -1,89 +1,89 @@
 # MCP Hub Docker Setup
 
-Configuração Docker para executar o MCP Hub em produção ou desenvolvimento local.
+Docker setup to run MCP Hub in production or local development.
 
-## 🚀 Início Rápido
+## 🚀 Quick Start
 
-### Script de Gerenciamento (Recomendado)
+### Management Script (Recommended)
 
-Use o script `docker.sh` para gerenciar facilmente o MCP Hub:
+Use the `docker.sh` script to easily manage MCP Hub:
 
 ```bash
-# Tornar o script executável (primeira vez)
+# Make the script executable (first time)
 chmod +x docker.sh
 
-# Desenvolvimento
+# Development
 ./docker.sh dev
 
-# Produção
+# Production
 ./docker.sh prod
 
-# Ver logs
+# View logs
 ./docker.sh logs
 
-# Parar serviços
+# Stop services
 ./docker.sh stop
 
-# Ver ajuda
+# View help
 ./docker.sh help
 ```
 
-### Desenvolvimento
+### Development
 
-1. **Configure as variáveis de ambiente:**
+1. **Set environment variables:**
   ```bash
   cp .env.example .env
-  # Edite o arquivo .env com suas configurações
+  # Edit the .env file with your settings
   ```
 
-2. **Configure os servidores MCP:**
+2. **Configure MCP servers:**
   ```bash
-  # Copie o arquivo de exemplo e edite com seus servidores MCP
+  # Copy the example file and edit it with your MCP servers
   cp config/config.example.json config/config.json
   ```
 
-3. **Execute em modo desenvolvimento:**
+3. **Run in development mode:**
   ```bash
   docker compose up --build
   ```
 
-### Produção
+### Production
 
-1. **Configure as variáveis de ambiente para produção:**
+1. **Set environment variables for production:**
   ```bash
-  # Configure MCP_HUB_API_KEY com uma chave segura (ou deixe vazio para desativar auth)
+  # Set MCP_HUB_API_KEY to a secure key (or leave empty to disable auth)
   export MCP_HUB_API_KEY="your-production-api-key"
   ```
 
-2. **Execute em modo produção (compose único):**
+2. **Run in production mode (single compose):**
   ```bash
   docker compose up -d --build
   ```
 
-## 📁 Estrutura de Arquivos
+## 📁 File Structure
 
 ```
-├── docker-compose.yml           # Compose único para produção
+├── docker-compose.yml           # Single compose for production
 ├── Dockerfile                   # Imagem Docker do MCP Hub
 ├── config/
-│   └── config.json             # Configuração dos servidores MCP
+│   └── config.json             # MCP servers configuration
 ├── logs/                       # Logs do MCP Hub (criado automaticamente)
 └── .env.example                # Template de variáveis de ambiente
 ```
 
-## 🔧 Configuração
+## 🔧 Configuration
 
 ### Variáveis de Ambiente
 
-| Variável | Padrão | Descrição |
+| Variable | Default | Description |
 |----------|--------|-----------|
-| `MCP_HUB_PORT` | `8000` | Porta do MCP Hub |
-| `MCP_HUB_API_KEY` | `default-api-key` (vazio desativa auth) | Chave de API para autenticação |
-| `MCP_HUB_LOG_LEVEL` | `info` | Nível de log (debug, info, warning, error) |
+| `MCP_HUB_PORT` | `8000` | MCP Hub port |
+| `MCP_HUB_API_KEY` | `default-api-key` (empty disables auth) | API key for authentication |
+| `MCP_HUB_LOG_LEVEL` | `info` | Log level (debug, info, warning, error) |
 
-### Configuração de Servidores MCP
+### MCP Servers Configuration
 
-Edite `config/config.json` para definir seus servidores MCP:
+Edit `config/config.json` to define your MCP servers:
 
 ```json
 {
@@ -96,80 +96,80 @@ Edite `config/config.json` para definir seus servidores MCP:
 }
 ```
 
-## 🏗️ Modos de Execução
+## 🏗️ Run Modes
 
-### Modo Desenvolvimento
+### Development Mode
 
-- **Hot Reload**: Mudanças no código são refletidas automaticamente
-- **Logs Detalhados**: Nível de log `info` por padrão
-- **Volume Binding**: Código fonte montado para desenvolvimento
-- **Configuração Flexível**: Arquivo de configuração com hot-reload
+- **Hot Reload**: Code changes are reflected automatically
+- **Detailed Logs**: `info` log level by default
+- **Volume Binding**: Source code mounted for development
+- **Flexible Configuration**: Config file with hot-reload
 
 ```bash
 docker compose up --build
 ```
 
-### Modo Produção
+### Production Mode
 
-- **Otimizado**: Sem volume binding de código fonte
-- **Logs Otimizados**: Nível de log `warning` por padrão
-- **Resource Limits**: Limites de CPU e memória definidos
-- **Health Checks**: Verificação de saúde mais frequente
-- **Log Rotation**: Configuração de rotação de logs
+- **Optimized**: No source volume binding
+- **Optimized Logs**: `warning` log level by default
+- **Resource Limits**: CPU and memory limits set
+- **Health Checks**: More frequent health checks
+- **Log Rotation**: Log rotation configured
 
 ```bash
 docker compose up -d --build
 ```
 
-## 🔍 Monitoramento
+## 🔍 Monitoring
 
 ### Health Check
 
-O MCP Hub inclui um health check:
+MCP Hub includes a health check:
 
 ```bash
-# Verificar status
+# Check status
 docker compose ps
 
-# Ver logs de health check
+# Check health check logs
 docker compose logs mcp-hub
 ```
 
 ### Logs
 
 ```bash
-# Ver logs em tempo real
+# View logs in real time
 docker compose logs -f mcp-hub
 
-# Ver logs de um período específico
+# View logs for a specific period
 docker compose logs --since="1h" mcp-hub
 ```
 
-## 🛠️ Comandos Úteis
+## 🛠️ Useful Commands
 
 ```bash
-# Buildar apenas a imagem
+# Build the image only
 docker compose build
 
-# Reiniciar serviços
+# Restart services
 docker compose restart
 
-# Parar serviços
+# Stop services
 docker compose down
 
-# Parar e remover volumes
+# Stop and remove volumes
 docker compose down -v
 
-# Ver status dos serviços
+# View services status
 docker compose ps
 
-# Executar comando no container
+# Run a command in the container
 docker compose exec mcp-hub /bin/bash
 ```
 
-## 🚨 Modo Servidor Único
+## 🚨 Single Server Mode
 
-Para executar um único servidor MCP em vez de usar arquivo de configuração, edite o `command` no `docker-compose.yml`:
+To run a single MCP server instead of using a config file, edit the `command` in `docker-compose.yml`:
 
 ```yaml
 command: [
@@ -180,57 +180,57 @@ command: [
 ]
 ```
 
-## 🔐 Segurança
+## 🔐 Security
 
-### Produção
+### Production
 
-- ✅ Sempre use uma API key forte em produção
-- ✅ Configure HTTPS/TLS se exposto publicamente
-- ✅ Use secrets management para variáveis sensíveis
-- ✅ Configure limites de recursos apropriados
-- ✅ Monitore logs para atividade suspeita
+- ✅ Always use a strong API key in production
+- ✅ Configure HTTPS/TLS if exposed publicly
+- ✅ Use secrets management for sensitive variables
+- ✅ Configure appropriate resource limits
+- ✅ Monitor logs for suspicious activity
 
-### Desenvolvimento
+### Development
 
-- ⚠️ Nunca commite chaves de API reais
-- ⚠️ Use `.env` para variáveis locais (já está no .gitignore)
+- ⚠️ Never commit real API keys
+- ⚠️ Use `.env` for local variables (already in .gitignore)
 
 ## 🐛 Troubleshooting
 
-### Container não inicia
+### Container won't start
 
 ```bash
-# Verificar logs
+# Check logs
 docker-compose logs mcp-hub
 
-# Verificar configuração
+# Check configuration
 docker-compose config
 ```
 
-### Health check falhando
+### Health check failing
 
 ```bash
-# Testar health check manualmente
+# Test the health check manually
 docker-compose exec mcp-hub curl -f http://localhost:8000/health
 ```
 
-### Problemas de permissão
+### Permission issues
 
 ```bash
-# Verificar proprietário dos volumes
+# Check volume ownership
 ls -la logs/ config/
 
-# Ajustar permissões se necessário
+# Adjust permissions if necessary
 sudo chown -R $USER:$USER logs/ config/
 ```
 
-## 🔓 Rodar sem chave (Keyless)
+## 🔓 Run without key (Keyless)
 
-- CLI/local: omita `--api-key` ou passe valor vazio `--api-key ""`.
-- Docker Compose: defina `MCP_HUB_API_KEY` vazio em `.env`.
+- CLI/local: omit `--api-key` or pass an empty value `--api-key ""`.
+- Docker Compose: set `MCP_HUB_API_KEY` empty in `.env`.
 
-Quando a chave de API é vazia, a autenticação é desativada. Não recomendado para exposição pública.
+When the API key is empty, authentication is disabled. Not recommended for public exposure.
 
-## 📎 Dicas
+## 📎 Tips
 
-- Git server: monte um repositório válido como leitura em `/repo` e aponte o servidor `mcp-server-git` para `--repository /repo`.
+- Git server: mount a valid repository as read-only in `/repo` and point `mcp-server-git` to `--repository /repo`.

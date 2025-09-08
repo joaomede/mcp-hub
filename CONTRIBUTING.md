@@ -1,33 +1,33 @@
 # Commitizen + Conventional Commits + Changelog
 
-## Fluxo recomendado
+## Recommended workflow
 
-1. Instale as dependências (Node.js >= 16):
+1. Install dev dependencies (Node.js >= 16):
    ```bash
    npm install --save-dev commitizen cz-conventional-changelog @commitlint/cli @commitlint/config-conventional husky standard-version
    npx husky install
    ```
-2. Faça commits usando:
+2. Create commits using:
    ```bash
    npm run commit
    ```
-   (ou `npx cz`)
+   (or `npx cz`)
 
-3. Antes de push, os commits serão validados pelo commitlint.
+3. Commits are validated by commitlint before pushing.
 
-4. Gere changelog e nova versão:
+4. Generate changelog and a new release:
    ```bash
    npm run release
-   # ou apenas npm run changelog
+   # or just npm run changelog
    ```
-   Isso atualiza o CHANGELOG.md e o versionamento no package.json.
+   This updates CHANGELOG.md and bumps the version in package.json.
 
-## Arquivos criados
-- `package.json` (scripts e dependências)
-- `commitlint.config.js` (validação de commit)
-- Husky será inicializado automaticamente no prepare
+## Generated files
+- `package.json` (scripts and dependencies)
+- `commitlint.config.js` (commit validation)
+- Husky will be initialized automatically on prepare
 
-## Dicas
-- Use sempre `npm run commit` para garantir o padrão.
-- O changelog é gerado automaticamente a partir dos commits convencionais.
-- Para CI/CD, pode-se integrar o semantic-release.
+## Tips
+- Always use `npm run commit` to ensure correct commit format.
+- The changelog is generated automatically from conventional commits.
+- For CI/CD, consider integrating semantic-release.
