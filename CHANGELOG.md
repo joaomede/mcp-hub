@@ -1,4 +1,19 @@
+
 # Changelog
+## [Unreleased] - 2025-09-08
+
+### Fixed
+
+- 🛠️ **MCP Handshake Compliance**: The hub now always calls `initialize()` on MCP sub-app startup, ensuring compatibility with Python FastMCP servers and preventing handshake errors.
+- 🧹 **MCP Proxy Argument Handling**: Patched the proxy to omit empty/null `arguments` in `tools/call` requests, improving compatibility with strict servers.
+- 📝 **Type Hints in Config Watcher**: Fixed type hints for async config reload callbacks to use `Awaitable`, preventing runtime errors on hot reload.
+- 🧪 **Integration Test & Config**: Integration test now dynamically discovers all servers from `test_config.json` and mounts the host repo for the git server; config updated to support official memory, filesystem, time, and git servers.
+- 🏷️ **uv.lock Correction**: Fixed editable package name in `uv.lock` to `mcp-hub` for proper dependency resolution.
+
+### Removed
+
+- 🧹 Removed debug scripts, temporary logs, and test config artifacts from the repository.
+
 
 All notable changes to this project will be documented in this file.
 

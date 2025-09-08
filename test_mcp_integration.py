@@ -61,6 +61,8 @@ class MCPHubTester:
                 "--name", "mcp-hub-test",
                 "-p", "8000:8000",
                 "-v", f"{subprocess.run(['pwd'], capture_output=True, text=True).stdout.strip()}/test_config.json:/app/config.json",
+                # Mount the current repo into the container for the git server
+                "-v", f"{subprocess.run(['pwd'], capture_output=True, text=True).stdout.strip()}:/repo:ro",
                 "mcp-hub:latest",
                 "--config", "/app/config.json",
                 "--host", "0.0.0.0"
@@ -229,57 +231,51 @@ class MCPHubTester:
             return {"success": False, "error": str(e)}
     
     def run_comprehensive_test(self) -> bool:
-        """Run comprehensive test suite"""
+        """Run comprehensive test suite for all servers in test_config.json"""
         print("=" * 60)
         print("🧪 MCP Hub Comprehensive Integration Test")
         print("=" * 60)
-        
-        # Test servers from config - focus on the working ones first
-        servers = ["memory", "filesystem"]  # Skip time for now
+
+        # Load all servers from test_config.json
+        try:
+            with open("test_config.json", "r") as f:
+                config = json.load(f)
+            servers = list(config.get("mcpServers", {}).keys())
+        except Exception as e:
+            print(f"❌ Failed to load test_config.json: {e}")
+            return False
+
         all_tests_passed = True
         working_servers = 0
-        
+        total_servers = len(servers)
+
         for server_name in servers:
             print(f"\n{'='*20} Testing {server_name.upper()} Server {'='*20}")
-            
+
             # Test connectivity
             if not self.test_server_connectivity(server_name):
                 all_tests_passed = False
                 continue
-            
+
             # Get server info
             server_info = self.test_server_info(server_name)
             if not server_info.get("success"):
-                # Don't fail the whole test if server info fails but connectivity works
                 print(f"⚠️  Server info failed for '{server_name}' but connectivity works")
-            
+
             # Inspect tools
             tools_info = self.inspect_server_tools(server_name)
             if not tools_info.get("success"):
                 all_tests_passed = False
                 continue
-            
+
             print(f"✅ Core tests passed for '{server_name}' server")
             working_servers += 1
-        
-        # Test the time server separately with more lenient expectations
-        print(f"\n{'='*20} Testing TIME Server (experimental) {'='*20}")
-        time_working = self.test_server_connectivity("time")
-        if time_working:
-            tools_info = self.inspect_server_tools("time")
-            if tools_info.get("success"):
-                working_servers += 1
-                print("✅ Time server is also working!")
-            else:
-                print("⚠️  Time server connects but tools listing failed")
-        else:
-            print("⚠️  Time server connection failed (this may be expected)")
-        
+
         # Overall assessment
         print(f"\n{'='*20} SUMMARY {'='*20}")
-        print(f"🎯 Working servers: {working_servers}/3")
+        print(f"🎯 Working servers: {working_servers}/{total_servers}")
         print(f"🔗 Core functionality: {'✅ PASS' if working_servers >= 2 else '❌ FAIL'}")
-        
+
         return working_servers >= 2  # Success if at least 2 servers work
 
 def main():

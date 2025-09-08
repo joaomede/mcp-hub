@@ -3,7 +3,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Callable, Optional, Dict, Any
+from typing import Callable, Optional, Dict, Any, Awaitable
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileModifiedEvent, FileMovedEvent, FileCreatedEvent
 import threading
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ConfigChangeHandler(FileSystemEventHandler):
     """Handler for config file changes."""
 
-    def __init__(self, config_path: Path, reload_callback: Callable[[Dict[str, Any]], None], loop: asyncio.AbstractEventLoop):
+    def __init__(self, config_path: Path, reload_callback: Callable[[Dict[str, Any]], Awaitable[None]], loop: asyncio.AbstractEventLoop):
         self.config_path = config_path.resolve()  # Resolve to absolute path
         self.reload_callback = reload_callback
         self.loop = loop  # Store reference to the main event loop
@@ -115,7 +115,7 @@ class ConfigChangeHandler(FileSystemEventHandler):
 class ConfigWatcher:
     """Watches a config file for changes and triggers reloads."""
 
-    def __init__(self, config_path: str, reload_callback: Callable[[Dict[str, Any]], None]):
+    def __init__(self, config_path: str, reload_callback: Callable[[Dict[str, Any]], Awaitable[None]]):
         self.config_path = Path(config_path).resolve()
         self.reload_callback = reload_callback
         self.observer: Optional[Observer] = None

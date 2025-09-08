@@ -126,23 +126,31 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
         session = getattr(app.state, 'session', None)
         if not session:
             raise HTTPException(status_code=503, detail="MCP server not connected")
-        
+
         try:
             # Extract method and params from MCP request
             method = request_data.get("method")
             params = request_data.get("params", {})
-            
+
             if method == "tools/call":
                 # Handle tool calls
                 tool_name = params.get("name")
-                arguments = params.get("arguments", {})
-                result = await session.call_tool(tool_name, arguments=arguments)
-                
+                # Patch: Omit 'arguments' field entirely if not present or empty
+                if "arguments" in params:
+                    arguments = params["arguments"]
+                    if arguments is None or arguments == {}:
+                        # Omit arguments by not passing the kwarg at all
+                        result = await session.call_tool(tool_name)
+                    else:
+                        result = await session.call_tool(tool_name, arguments=arguments)
+                else:
+                    result = await session.call_tool(tool_name)
+
                 # Return raw MCP response
                 return {
                     "result": {
                         "content": [
-                            {"type": content.type, "text": content.text} 
+                            {"type": content.type, "text": content.text}
                             if hasattr(content, 'text') else {"type": content.type}
                             for content in result.content
                         ]
@@ -165,7 +173,7 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
                 }
             else:
                 raise HTTPException(status_code=400, detail=f"Unsupported method: {method}")
-                
+
         except Exception as e:
             logger.error(f"MCP proxy error: {e}")
             raise HTTPException(status_code=500, detail=str(e))
@@ -368,6 +376,10 @@ async def lifespan(app: FastAPI):
 
             async with client_context as (reader, writer, *_):
                 async with ClientSession(reader, writer) as session:
+                    # Perform MCP handshake before any requests
+                    # Some servers (notably Python FastMCP-based) strictly
+                    # require initialize to be called prior to tools/list or other methods.
+                    await session.initialize()
                     app.state.session = session
                     app.state.is_connected = True
                     yield

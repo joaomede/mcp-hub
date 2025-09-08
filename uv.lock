@@ -350,7 +350,7 @@ cli = [
 ]
 
 [[package]]
-name = "mcpo"
+name = "mcp-hub"
 version = "0.0.16"
 source = { editable = "." }
 dependencies = [
