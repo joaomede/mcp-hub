@@ -45,40 +45,9 @@ class MCPHubTester:
         self.container_id = None
         
     def start_container(self) -> bool:
-        """Start MCP Hub container in background"""
-        print("🚀 Starting MCP Hub container...")
-        
-        try:
-            # Stop any existing container
-            subprocess.run(["docker", "stop", "mcp-hub-test"], 
-                         capture_output=True, check=False)
-            subprocess.run(["docker", "rm", "mcp-hub-test"], 
-                         capture_output=True, check=False)
-            
-            # Start new container
-            result = subprocess.run([
-                "docker", "run", "-d",
-                "--name", "mcp-hub-test",
-                "-p", "8000:8000",
-                "-v", f"{subprocess.run(['pwd'], capture_output=True, text=True).stdout.strip()}/test_config.json:/app/config.json",
-                # Mount the current repo into the container for the git server
-                "-v", f"{subprocess.run(['pwd'], capture_output=True, text=True).stdout.strip()}:/repo:ro",
-                "mcp-hub:latest",
-                "--config", "/app/config.json",
-                "--host", "0.0.0.0"
-            ], capture_output=True, text=True, check=True)
-            
-            self.container_id = result.stdout.strip()
-            print(f"✅ Container started: {self.container_id}")
-            
-            # Wait for container to be ready
-            return self.wait_for_ready()
-            
-        except subprocess.CalledProcessError as e:
-            print(f"❌ Failed to start container: {e}")
-            print(f"stdout: {e.stdout}")
-            print(f"stderr: {e.stderr}")
-            return False
+        """Check if MCP Hub is up (docker compose mode)"""
+        print("🔎 Verificando se o serviço MCP Hub já está rodando em localhost:8000...")
+        return self.wait_for_ready()
     
     def wait_for_ready(self, timeout: int = 30) -> bool:
         """Wait for MCP Hub to be ready"""
@@ -100,13 +69,8 @@ class MCPHubTester:
         return False
     
     def stop_container(self):
-        """Stop and remove the test container"""
-        if self.container_id:
-            print("🛑 Stopping test container...")
-            subprocess.run(["docker", "stop", self.container_id], 
-                         capture_output=True, check=False)
-            subprocess.run(["docker", "rm", self.container_id], 
-                         capture_output=True, check=False)
+        """No-op: container managed externally (docker compose)"""
+        pass
     
     def test_server_connectivity(self, server_name: str) -> bool:
         """Test if a server is accessible"""
@@ -329,14 +293,14 @@ def main():
     signal.signal(signal.SIGTERM, cleanup)
     
     try:
-        # Start container
+        # Apenas verifica se o serviço está pronto
         if not tester.start_container():
-            print("❌ Failed to start container")
+            print("❌ MCP Hub não está rodando em localhost:8000")
             return 1
-        
-        # Run tests
+
+        # Executa os testes normalmente
         success = tester.run_comprehensive_test()
-        
+
         if success:
             print("\n" + "=" * 60)
             print("🎉 All tests passed! MCP Hub is working correctly!")
@@ -347,7 +311,6 @@ def main():
             print("❌ Some tests failed!")
             print("=" * 60)
             return 1
-            
     finally:
         cleanup()
 
