@@ -6,7 +6,16 @@ MCP Hub is a simplified, pure stdio aggregator that runs multiple MCP servers th
 
 Pure stdio MCP-to-MCP aggregation. No external servers. No complexity.
 
-> **Note**: This project is adapted from [mcpo](https://github.com/open-webui/mcpo) with a focus on **pure stdio MCP aggregation** rather than mixed transport support, providing a clean gateway solution for stdio MCP server management only.
+> Note: This project is adapted from [mcpo](https://github.com/open-webui/mcpo) with a focus on pure stdio MCP aggregation (no mixed transports), providing a clean gateway for stdio MCP server management only.
+
+## 📌 Status
+
+- Pure stdio MCP aggregation — Stable
+- JSON-RPC compliance and error shaping — Stable
+- HTTP session model with initialize-first (n8n-compatible) — Stable
+- API key authentication — Stable (recommended for production)
+- Config file with optional hot-reload — Stable
+- Docker/Docker Compose deployment — Stable
 
 ## ✅ Compatibility Highlights
 
@@ -18,20 +27,11 @@ Pure stdio MCP-to-MCP aggregation. No external servers. No complexity.
   - `tools/list` and `tools/call` return JSON-RPC–shaped errors until `initialize` is performed for that session
 
 ## 🤔 Why Use MCP Hub?
+MCP Hub simplifies running multiple stdio MCP servers behind a single HTTP gateway with proper sessioning, authentication, and JSON-RPC compliance.
 
-Managing multiple MCP servers individually is complex:
+## 🚀 Quick start
 
-
-MCP Hub solves all of that:
-
-
-What feels like "one more layer" is actually **simplification at scale**.
-
-MCP Hub makes your MCP infrastructure manageable and scalable—right now, with zero complexity.
-
-## 🚀 Quick Usage
-
-We recommend using uv for lightning-fast startup and zero config.
+We recommend using uv for fast startup and zero config.
 
 ```bash
 uvx mcp-hub --port 8000 --api-key "top-secret" -- your_mcp_server_command
@@ -51,24 +51,20 @@ mcp-hub --port 8000 --api-key "top-secret" -- your_mcp_server_command
 mcp-hub --port 8000 --api-key "secret" -- uvx mcp-server-time --local-timezone=America/New_York
 ```
 
-**Multiple MCP Servers (Recommended):**
+Multiple MCP servers (via config file, recommended):
 
 ```bash
-# Use config file for multiple servers
+mcp-hub --config config.json --port 8000 --api-key "secret"
+# Optional hot-reload during development
 mcp-hub --config config.json --hot-reload --port 8000 --api-key "secret"
 ```
 
-**Multiple stdio MCP Servers (via config file):**
+You can also run MCP Hub via Docker:
 
 ```bash
-# Use config file for multiple stdio MCP servers
-mcp-hub --config config.json --port 8000 --api-key "secret"
-```
-
-You can also run MCP Hub via Docker with no installation:
-
-```bash
-docker run -p 8000:8000 ghcr.io/joaomede/mcp-hub:main --api-key "secret" -- your_mcp_server_command
+# Build and run locally
+docker build -t mcp-hub:latest .
+docker run --rm -p 8000:8000 mcp-hub:latest --api-key "secret" -- your_mcp_server_command
 ```
 
 
@@ -94,27 +90,23 @@ Tip: copy the example configuration before starting services:
 cp config/config.example.json config/config.json
 ```
 
-**Example - Single Server:**
-
-```bash
-uvx mcp-hub --port 8000 --api-key "secret" -- uvx mcp-server-time --local-timezone=America/New_York
-```
-
 Your MCP server is now accessible at:
 
-### 🔄 Using a Config File (Recommended)
+- http://localhost:8000/mcp (single proxy)
+
+### 🔄 Using a config file (recommended)
 
 You can serve **multiple MCP servers** via a single config file that follows the [Claude Desktop](https://modelcontextprotocol.io/quickstart/user) format.
 
 Enable hot-reload mode with `--hot-reload` to automatically watch your config file for changes and reload servers without downtime:
 
-**Start via:**
+Start via:
 
 ```bash
 mcp-hub --config /path/to/config.json
 ```
 
-**Or with hot-reload enabled:**
+Or with hot-reload enabled:
 
 ```bash
 mcp-hub --config /path/to/config.json --hot-reload
@@ -141,9 +133,13 @@ mcp-hub --config /path/to/config.json --hot-reload
 }
 ```
 
-Each stdio MCP server will be accessible under its own unique route:
+Each stdio MCP server will be accessible under its own unique route, for example:
 
-Connect your MCP client to any of these endpoints to access the tools from that specific server.
+- http://localhost:8000/memory/mcp
+- http://localhost:8000/time/mcp
+- http://localhost:8000/filesystem/mcp
+
+Connect your MCP client to the endpoint of the desired server to access its tools.
 
 📖 **For detailed usage instructions, examples, and best practices, see [USAGE.md](USAGE.md)**
 
@@ -157,7 +153,7 @@ MCP_HUB_API_KEY=
 
 When no API key is provided (empty), authentication is disabled. For public deployments, keep a strong key or place the service behind a trusted proxy.
 
-## � Requirements
+## Requirements
 
 - Python 3.11+
 - uv or pip + virtualenv
@@ -270,14 +266,7 @@ MIT
 
 ## 🤝 Contributing
 
-We welcome and strongly encourage contributions from the community!
-
-Whether you're fixing a bug, adding features, improving documentation, or just sharing ideas—your input is incredibly valuable and helps make MCP Hub better for everyone.
-
-Getting started is easy:
-
-
-Not sure where to start? Feel free to open an issue or ask a question—we're happy to help you find a good first task.
+Contributions are welcome! The project is under continuous improvement. Whether you're fixing a bug, adding features, improving docs, or sharing ideas—your input helps make MCP Hub better for everyone. Open an issue or PR anytime.
 
 ## 🙏 Acknowledgments
 
