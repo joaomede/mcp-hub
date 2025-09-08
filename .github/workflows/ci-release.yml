@@ -17,6 +17,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          check-latest: true
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -26,6 +27,8 @@ jobs:
           python --version
           python -c "import sys; print(sys.executable)"
           pip --version
+          which python
+          ls -la /opt/hostedtoolcache/Python/
 
       - name: Install Poetry (if needed)
         run: |
