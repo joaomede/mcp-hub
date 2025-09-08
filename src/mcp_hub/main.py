@@ -14,12 +14,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.routing import Mount
 
 from mcp import ClientSession, StdioServerParameters
-from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
-from mcp.client.streamable_http import streamablehttp_client
 
 from mcp_hub.utils.auth import APIKeyMiddleware, get_verify_api_key
-from mcp_hub.utils.main import normalize_server_type
 from mcp_hub.utils.config_watcher import ConfigWatcher
 
 
@@ -46,22 +43,14 @@ class GracefulShutdown:
 
 def validate_server_config(server_name: str, server_cfg: Dict[str, Any]) -> None:
     """Validate individual server configuration."""
-    server_type = server_cfg.get("type")
-
-    if normalize_server_type(server_type) in ("sse", "streamable-http"):
-        if not server_cfg.get("url"):
-            raise ValueError(f"Server '{server_name}' of type '{server_type}' requires a 'url' field")
-    elif server_cfg.get("command"):
-        # stdio server
-        if not isinstance(server_cfg["command"], str):
-            raise ValueError(f"Server '{server_name}' 'command' must be a string")
-        if server_cfg.get("args") and not isinstance(server_cfg["args"], list):
-            raise ValueError(f"Server '{server_name}' 'args' must be a list")
-    elif server_cfg.get("url") and not server_type:
-        # Fallback for old SSE config without explicit type
-        pass
-    else:
-        raise ValueError(f"Server '{server_name}' must have either 'command' for stdio or 'type' and 'url' for remote servers")
+    if not server_cfg.get("command"):
+        raise ValueError(f"Server '{server_name}' must have a 'command' field")
+    
+    if not isinstance(server_cfg["command"], str):
+        raise ValueError(f"Server '{server_name}' 'command' must be a string")
+    
+    if server_cfg.get("args") and not isinstance(server_cfg["args"], list):
+        raise ValueError(f"Server '{server_name}' 'args' must be a list")
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -110,31 +99,12 @@ def create_sub_app(server_name: str, server_cfg: Dict[str, Any], cors_allow_orig
         allow_headers=["*"],
     )
 
-    # Configure server type and connection parameters
-    if server_cfg.get("command"):
-        # stdio
-        sub_app.state.server_type = "stdio"
-        sub_app.state.command = server_cfg["command"]
-        sub_app.state.args = server_cfg.get("args", [])
-        sub_app.state.env = {**os.environ, **server_cfg.get("env", {})}
-
-    server_config_type = server_cfg.get("type")
-    if server_config_type == "sse" and server_cfg.get("url"):
-        sub_app.state.server_type = "sse"
-        sub_app.state.args = [server_cfg["url"]]
-        sub_app.state.headers = server_cfg.get("headers")
-    elif normalize_server_type(server_config_type) == "streamable-http" and server_cfg.get("url"):
-        url = server_cfg["url"]
-        sub_app.state.server_type = "streamablehttp"
-        sub_app.state.args = [url]
-        sub_app.state.headers = server_cfg.get("headers")
-    elif not server_config_type and server_cfg.get(
-        "url"
-    ):  # Fallback for old SSE config
-        sub_app.state.server_type = "sse"
-        sub_app.state.args = [server_cfg["url"]]
-        sub_app.state.headers = server_cfg.get("headers")
-
+    # Configure server type and connection parameters for stdio
+    sub_app.state.server_type = "stdio"
+    sub_app.state.command = server_cfg["command"]
+    sub_app.state.args = server_cfg.get("args", [])
+    sub_app.state.env = {**os.environ, **server_cfg.get("env", {})}
+    
     if api_key and strict_auth:
         sub_app.add_middleware(APIKeyMiddleware, api_key=api_key)
 
@@ -303,7 +273,6 @@ async def reload_config_handler(main_app: FastAPI, new_config_data: Dict[str, An
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    server_type = normalize_server_type(getattr(app.state, "server_type", "stdio"))
     command = getattr(app.state, "command", None)
     args = getattr(app.state, "args", [])
     args = args if isinstance(args, list) else [args]
@@ -315,7 +284,7 @@ async def lifespan(app: FastAPI):
     # Get shutdown handler from app state
     shutdown_handler = getattr(app.state, "shutdown_handler", None)
 
-    is_main_app = not command and not (server_type in ["sse", "streamable-http"] and args)
+    is_main_app = not command  # Main app doesn't have command
 
     if is_main_app:
         async with AsyncExitStack() as stack:
@@ -387,28 +356,15 @@ async def lifespan(app: FastAPI):
             # The AsyncExitStack will handle the graceful shutdown of all servers
             # when the 'with' block is exited.
     else:
-        # This is a sub-app's lifespan
+        # This is a sub-app's lifespan - stdio only
         app.state.is_connected = False
         try:
-            if server_type == "stdio":
-                server_params = StdioServerParameters(
-                    command=command,
-                    args=args,
-                    env={**os.environ, **env},
-                )
-                client_context = stdio_client(server_params)
-            elif server_type == "sse":
-                headers = getattr(app.state, "headers", None)
-                client_context = sse_client(
-                    url=args[0],
-                    sse_read_timeout=connection_timeout or 900,
-                    headers=headers,
-                )
-            elif server_type == "streamable-http":
-                headers = getattr(app.state, "headers", None)
-                client_context = streamablehttp_client(url=args[0], headers=headers)
-            else:
-                raise ValueError(f"Unsupported server type: {server_type}")
+            server_params = StdioServerParameters(
+                command=command,
+                args=args,
+                env={**os.environ, **env},
+            )
+            client_context = stdio_client(server_params)
 
             async with client_context as (reader, writer, *_):
                 async with ClientSession(reader, writer) as session:
@@ -437,7 +393,6 @@ async def run(
     strict_auth = kwargs.get("strict_auth", False)
 
     # MCP Server
-    server_type = normalize_server_type(kwargs.get("server_type"))
     server_command = kwargs.get("server_command")
 
     # MCP Config
@@ -511,35 +466,11 @@ async def run(
     if api_key and strict_auth:
         main_app.add_middleware(APIKeyMiddleware, api_key=api_key)
 
-    headers = kwargs.get("headers")
-    if headers and isinstance(headers, str):
-        try:
-            headers = json.loads(headers)
-        except json.JSONDecodeError:
-            logger.warning("Invalid JSON format for headers. Headers will be ignored.")
-            headers = None
-
-    if server_type == "sse":
-        logger.info(
-            f"Configuring for a single SSE MCP Server with URL {server_command[0]}"
-        )
-        main_app.state.server_type = "sse"
-        main_app.state.args = server_command[0]  # Expects URL as the first element
-        main_app.state.api_dependency = api_dependency
-        main_app.state.headers = headers
-    elif server_type == "streamable-http":
-        logger.info(
-            f"Configuring for a single StreamableHTTP MCP Server with URL {server_command[0]}"
-        )
-        main_app.state.server_type = "streamable-http"
-        main_app.state.args = server_command[0]  # Expects URL as the first element
-        main_app.state.api_dependency = api_dependency
-        main_app.state.headers = headers
-    elif server_command:  # This handles stdio
+    if server_command:  # This handles stdio only
         logger.info(
             f"Configuring for a single Stdio MCP Server with command: {' '.join(server_command)}"
         )
-        main_app.state.server_type = "stdio"  # Explicitly set type
+        main_app.state.server_type = "stdio"
         main_app.state.command = server_command[0]
         main_app.state.args = server_command[1:]
         main_app.state.env = os.environ.copy()

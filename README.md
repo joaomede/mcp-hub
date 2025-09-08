@@ -1,33 +1,33 @@
 # ⚡️ MCP Hub
 
-**A powerful MCP Gateway for aggregating multiple Model Context Protocol servers.**
+**Pure MCP Gateway for aggregating multiple Model Context Protocol servers.**
 
-MCP Hub is a simple yet robust gateway that aggregates multiple MCP servers into a single endpoint, providing unified access, authentication, and management for your MCP tools without any protocol conversion.
+MCP Hub is a simplified, pure aggregator that runs multiple MCP servers through a single HTTP gateway. Unlike complex solutions, MCP Hub executes and manages all your MCP servers internally through stdio, exposing them through clean HTTP endpoints.
 
-Pure MCP-to-MCP. No conversions. No hassle.
+Pure MCP-to-MCP aggregation. No external servers. No hassle.
 
-> **Note**: This project is inspired by and evolved from [mcpo](https://github.com/open-webui/mcpo) by Timothy Jaeryang Baek. MCP Hub focuses on pure MCP protocol forwarding without OpenAPI conversion, providing a clean gateway solution for MCP server aggregation.
+> **Note**: This project is adapted from [mcpo](https://github.com/open-webui/mcpo) with a focus on **pure stdio MCP aggregation** rather than OpenAPI conversion, providing a clean gateway solution for MCP server management.
 
 ## 🤔 Why Use MCP Hub?
 
 Managing multiple MCP servers individually is complex:
 
-- 🔓 Each server requires separate security configuration
-- ❌ Multiple ports and endpoints to manage
+- 🔓 Each server requires separate management and ports
+- ❌ Multiple command-line processes to handle
 - 🧩 No unified discovery or routing
 - 📊 Scattered monitoring and logging
 
 MCP Hub solves all of that:
 
-- ✅ **Single Entry Point**: One gateway for all your MCP servers
-- 🛡 **Unified Security**: Centralized authentication and authorization  
+- ✅ **Single Entry Point**: One gateway for all your stdio MCP servers
+- 🛡 **Unified Management**: Centralized server lifecycle and configuration  
 - 🔄 **Hot Reload**: Add/remove servers without restart
-- 📍 **Smart Routing**: Clean path-based routing (`/server/mcp`)
-- 🏗️ **Pure MCP**: No protocol conversion, maintains MCP semantics
+- 📍 **Clean Routing**: Path-based routing (`/{server-name}/mcp`)
+- 🏗️ **Pure stdio**: Executes MCP servers directly, no external dependencies
 
 What feels like "one more layer" is actually **simplification at scale**.
 
-MCP Hub makes your MCP infrastructure manageable, secure, and scalable—right now, with zero complexity.
+MCP Hub makes your MCP infrastructure manageable and scalable—right now, with zero complexity.
 
 ## 🚀 Quick Usage
 

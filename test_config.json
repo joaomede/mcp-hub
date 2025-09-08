@@ -1,12 +1,16 @@
 {
   "mcpServers": {
     "memory": {
-      "command": "echo",
-      "args": ["test-memory-server"]
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
     },
     "time": {
-      "command": "echo", 
-      "args": ["test-time-server"]
+      "command": "uvx", 
+      "args": ["mcp-server-time", "--local-timezone=America/New_York"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
     }
   }
 }
