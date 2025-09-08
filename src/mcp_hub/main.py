@@ -133,20 +133,16 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
             params = request_data.get("params", {})
 
             if method == "tools/call":
-                # Handle tool calls
+                # ...existing code...
                 tool_name = params.get("name")
-                # Patch: Omit 'arguments' field entirely if not present or empty
                 if "arguments" in params:
                     arguments = params["arguments"]
                     if arguments is None or arguments == {}:
-                        # Omit arguments by not passing the kwarg at all
                         result = await session.call_tool(tool_name)
                     else:
                         result = await session.call_tool(tool_name, arguments=arguments)
                 else:
                     result = await session.call_tool(tool_name)
-
-                # Return raw MCP response
                 return {
                     "result": {
                         "content": [
@@ -157,7 +153,7 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
                     }
                 }
             elif method == "tools/list":
-                # Handle tool listing
+                # ...existing code...
                 result = await session.list_tools()
                 return {
                     "result": {
@@ -171,6 +167,9 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
                         ]
                     }
                 }
+            elif method == "initialize":
+                # Compat: ignore/accept initialize from HTTP clients (e.g. n8n)
+                return {"result": {}}
             else:
                 raise HTTPException(status_code=400, detail=f"Unsupported method: {method}")
 
