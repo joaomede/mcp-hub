@@ -1,4 +1,9 @@
 node_modules/
+logs/
+*.log
+*.pid
+__pycache__/
+*.pyc
 # Python-generated files
 __pycache__/
 *.py[oc]
