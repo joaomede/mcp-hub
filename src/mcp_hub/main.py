@@ -124,7 +124,7 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
     if not hasattr(app.state, "http_sessions"):
         app.state.http_sessions = {}
 
-    from fastapi import Request
+    from fastapi import Request, Response
     import uuid
 
     @app.post("/")
@@ -174,6 +174,15 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
                         "sessionId": session_id,
                     },
                 }
+
+            elif method == "notifications/initialized":
+                # JSON-RPC notification from client. No response body should be returned if there's no id.
+                # We'll mark the session and return 204 No Content for true notifications (no id).
+                sess_state["initialized"] = True
+                if req_id is None:
+                    return Response(status_code=204)
+                # If an id was sent (non-standard), acknowledge with empty result to be lenient
+                return {"jsonrpc": "2.0", "id": req_id, "result": {}}
 
             elif method == "tools/list":
                 # Enforce MCP: require initialize first
@@ -234,10 +243,21 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
                     },
                 }
             else:
-                raise HTTPException(status_code=400, detail=f"Unsupported method: {method}")
+                # Unknown method: reply with JSON-RPC compliant error object (Method not found)
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "error": {
+                        "code": -32601,
+                        "message": f"Method not found: {method}",
+                    },
+                }
 
         except Exception as e:
             logger.error(f"MCP proxy error: {e}")
+            # Propagate HTTPExceptions as-is; otherwise return 500
+            if isinstance(e, HTTPException):
+                raise e
             raise HTTPException(status_code=500, detail=str(e))
 
 
