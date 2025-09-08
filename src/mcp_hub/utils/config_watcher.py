@@ -121,6 +121,9 @@ class ConfigWatcher:
         self.observer: Optional[Observer] = None
         self.handler: Optional[ConfigChangeHandler] = None
         self.loop: Optional[asyncio.AbstractEventLoop] = None
+        # If we create our own loop we store the thread here so we can stop it
+        self._loop_thread: Optional[threading.Thread] = None
+        self._created_own_loop = False
 
     def start(self):
         """Start watching the config file."""
@@ -132,8 +135,16 @@ class ConfigWatcher:
         try:
             self.loop = asyncio.get_running_loop()
         except RuntimeError:
-            logger.error("No running event loop found, cannot start config watcher")
-            return
+            # No running loop in this thread; create a background loop in a dedicated thread
+            logger.info("No running event loop found, creating a background event loop for ConfigWatcher")
+            self.loop = asyncio.new_event_loop()
+            def _run_loop(loop: asyncio.AbstractEventLoop):
+                asyncio.set_event_loop(loop)
+                loop.run_forever()
+
+            self._loop_thread = threading.Thread(target=_run_loop, args=(self.loop,), daemon=True)
+            self._loop_thread.start()
+            self._created_own_loop = True
 
         self.handler = ConfigChangeHandler(self.config_path, self.reload_callback, self.loop)
         self.observer = Observer()
@@ -153,6 +164,18 @@ class ConfigWatcher:
             self.observer.stop()
             self.observer.join()
             logger.info(f"Stopped watching config file: {self.config_path}")
+
+        # If we created our own loop, stop it cleanly
+        if getattr(self, '_created_own_loop', False) and self.loop:
+            try:
+                self.loop.call_soon_threadsafe(self.loop.stop)
+            except Exception:
+                pass
+            if self._loop_thread:
+                self._loop_thread.join(timeout=2)
+            self._created_own_loop = False
+            self.loop = None
+            self._loop_thread = None
 
     def __enter__(self):
         self.start()

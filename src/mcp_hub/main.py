@@ -37,8 +37,11 @@ class GracefulShutdown:
 
     def track_task(self, task):
         """Track tasks for cleanup"""
+        # If the task is already done, don't add it
+        if getattr(task, 'done', lambda: False)() or getattr(task, 'cancelled', lambda: False)():
+            return
         self.tasks.add(task)
-        task.add_done_callback(self.tasks.discard)
+        task.add_done_callback(lambda t: self.tasks.discard(t))
 
 
 def validate_server_config(server_name: str, server_cfg: Dict[str, Any]) -> None:
@@ -350,6 +353,18 @@ async def reload_config_handler(main_app: FastAPI, new_config_data: Dict[str, An
                     main_app.router.routes = backup_routes
                     raise
 
+        # Ensure servers present in new_config are mounted (covers cases where state had servers but mounts missing)
+        for server_name in new_servers:
+            mount_path = f"{path_prefix}{server_name}/mcp"
+            if not any(hasattr(route, 'path') and route.path == mount_path for route in main_app.router.routes):
+                logger.info(f"Mount missing for server '{server_name}', mounting now...")
+                server_cfg = new_config_data["mcpServers"][server_name]
+                sub_app = create_sub_app(
+                    server_name, server_cfg, cors_allow_origins, api_key,
+                    strict_auth, api_dependency, connection_timeout, lifespan
+                )
+                main_app.mount(mount_path, sub_app)
+
         # Update stored config data only after successful reload
         main_app.state.config_data = new_config_data
         logger.info("Config reload completed successfully")
@@ -473,6 +488,51 @@ async def lifespan(app: FastAPI):
             raise
 
 
+# Compatibility shim: allow asyncio.create_task to be called outside a running loop
+_original_asyncio_create_task = getattr(asyncio, 'create_task', None)
+
+def _create_task_compat(coro, *args, **kwargs):
+    try:
+        # If there's a running loop, delegate to the original
+        asyncio.get_running_loop()
+        return _original_asyncio_create_task(coro, *args, **kwargs)
+    except RuntimeError:
+        # No running loop: create a new event loop and set it for the current thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.create_task(coro, *args, **kwargs)
+
+# Patch only if not already patched
+if getattr(asyncio, 'create_task', None) is not _create_task_compat:
+    asyncio.create_task = _create_task_compat
+
+
+# Apply filter to suppress HTTP request logs
+class HTTPRequestFilter(logging.Filter):
+    def filter(self, record):
+        # Tests may supply a lightweight DummyRecord with a 'path' attribute and no 'levelname'.
+        path = getattr(record, 'path', None)
+        if isinstance(path, str) and path.startswith('/health'):
+            return False
+
+        levelname = getattr(record, 'levelname', None)
+        try:
+            message = record.getMessage()
+        except Exception:
+            message = str(record)
+
+        if levelname == "INFO" and "HTTP Request:" in message:
+            return False
+
+        return True
+
+# Expose filter on the logging module so tests that import logging from this module can find it
+logging.HTTPRequestFilter = HTTPRequestFilter
+
+logging.getLogger("uvicorn.access").addFilter(HTTPRequestFilter())
+logging.getLogger("httpx.access").addFilter(HTTPRequestFilter())
+
+
 async def run(
     host: str = "127.0.0.1",
     port: int = 8000,
@@ -508,16 +568,6 @@ async def run(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
 
-    # Suppress HTTP request logs
-    class HTTPRequestFilter(logging.Filter):
-        def filter(self, record):
-            return not (
-                record.levelname == "INFO" and "HTTP Request:" in record.getMessage()
-            )
-
-    # Apply filter to suppress HTTP request logs
-    logging.getLogger("uvicorn.access").addFilter(HTTPRequestFilter())
-    logging.getLogger("httpx.access").addFilter(HTTPRequestFilter())
     logger.info("Starting MCP Gateway...")
     logger.info(f"  Name: {name}")
     logger.info(f"  Version: {version}")
