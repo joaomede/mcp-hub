@@ -31,11 +31,11 @@ MCP Hub uses the same configuration format as Claude Desktop:
     },
     "time": {
       "command": "uvx", 
-      "args": ["mcp-server-time", "--local-timezone=America/New_York"]
+  "args": ["mcp-server-time", "--local-timezone", "America/New_York"]
     },
     "filesystem": {
-      "command": "uvx",
-      "args": ["mcp-server-filesystem", "--allowed-dir", "/tmp"]
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
     }
   }
 }
@@ -76,6 +76,10 @@ curl -H "Authorization: Bearer your-secret-key" \
      http://localhost:8000/memory/mcp
 ```
 
+    Run without a key (development only):
+
+    - Omit `--api-key` or pass empty `--api-key ""` to disable auth.
+
 ## 🐳 Docker Usage
 
 ### Quick Start
@@ -94,11 +98,9 @@ docker run -p 8000:8000 \
 ### Docker Compose (Recommended)
 
 ```bash
-# Development
-docker-compose up --build
-
-# Production
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Development / Production (single compose)
+docker compose up --build
+docker compose up -d --build
 ```
 
 See [DOCKER.md](DOCKER.md) for detailed Docker configuration.

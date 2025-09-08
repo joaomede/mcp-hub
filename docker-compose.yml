@@ -24,6 +24,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    # Tip: to enable config hot-reload inside the container, add "--hot-reload" below
     command: [
       "--config", "/app/config/config.json",
       "--port", "8000",

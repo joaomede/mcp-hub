@@ -12,18 +12,9 @@ Pure stdio MCP-to-MCP aggregation. No external servers. No complexity.
 
 Managing multiple MCP servers individually is complex:
 
-- 🔓 Each server requires separate management and ports
-- ❌ Multiple command-line processes to handle
-- 🧩 No unified discovery or routing
-- 📊 Scattered monitoring and logging
 
 MCP Hub solves all of that:
 
-- ✅ **Single Entry Point**: One gateway for all your stdio MCP servers
-- 🛡 **Unified Management**: Centralized server lifecycle and configuration  
-- 🔄 **Hot Reload**: Add/remove servers without restart
-- 📍 **Clean Routing**: Path-based routing (`/{server-name}/mcp`)
-- 🏗️ **Pure stdio**: Executes MCP servers directly, no external dependencies
 
 What feels like "one more layer" is actually **simplification at scale**.
 
@@ -89,6 +80,12 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build # 
 
 See [DOCKER.md](DOCKER.md) for detailed Docker setup instructions.
 
+Tip: copy the example configuration before starting services:
+
+```bash
+cp config/config.example.json config/config.json
+```
+
 **Example - Single Server:**
 
 ```bash
@@ -96,8 +93,6 @@ uvx mcp-hub --port 8000 --api-key "secret" -- uvx mcp-server-time --local-timezo
 ```
 
 Your MCP server is now accessible at:
-- **MCP Endpoint**: `http://localhost:8000/mcp` 
-- **Connect via MCP client**: `mcp-client --url ws://localhost:8000/mcp`
 
 ### 🔄 Using a Config File (Recommended)
 
@@ -128,29 +123,35 @@ mcp-hub --config /path/to/config.json --hot-reload
     },
     "time": {
       "command": "uvx",
-      "args": ["mcp-server-time", "--local-timezone=America/New_York"]
+  "args": ["mcp-server-time", "--local-timezone", "America/New_York"]
     },
     "filesystem": {
-      "command": "uvx",
-      "args": ["mcp-server-filesystem", "--allowed-dir", "/tmp"]
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
     }
   }
 }
 ```
 
 Each stdio MCP server will be accessible under its own unique route:
-- **Memory tools**: `http://localhost:8000/memory/mcp`
-- **Time tools**: `http://localhost:8000/time/mcp`
-- **Filesystem tools**: `http://localhost:8000/filesystem/mcp`
 
 Connect your MCP client to any of these endpoints to access the tools from that specific server.
 
 📖 **For detailed usage instructions, examples, and best practices, see [USAGE.md](USAGE.md)**
 
-## 🔧 Requirements
+### � Running without API keys (keyless mode)
 
-- Python 3.11+
-- uv (optional, but highly recommended for performance + packaging)
+By default, Docker Compose provides a non-empty API key. To run without auth:
+
+
+```
+MCP_HUB_API_KEY=
+```
+
+When no API key is provided (empty), authentication is disabled. For public deployments, keep a strong key or place the service behind a trusted proxy.
+
+## �🔧 Requirements
+
 
 ## 🛠️ Development & Testing
 
@@ -206,6 +207,10 @@ To contribute or run tests locally:
     ```
     This allows you to test your changes interactively before committing or creating a pull request. Access your locally running `mcp-hub` instance at `http://localhost:8000` and connect MCP clients to the `/mcp` endpoints.
 
+### 🔄 Hot-reload toggle
+
+Hot-reload is great for development. Start with `--hot-reload` to watch `config.json` and reload servers automatically. In Docker, you can add `--hot-reload` to the command array in `docker-compose.yml` if you want it enabled.
+
 ## 🪪 License
 
 MIT
@@ -218,26 +223,15 @@ Whether you're fixing a bug, adding features, improving documentation, or just s
 
 Getting started is easy:
 
-- Fork the repo
-- Create a new branch
-- Make your changes
-- Open a pull request
 
 Not sure where to start? Feel free to open an issue or ask a question—we're happy to help you find a good first task.
 
 ## 🙏 Acknowledgments
 
-- **[mcpo](https://github.com/open-webui/mcpo)** by Timothy Jaeryang Baek - The original inspiration and foundation for this project
-- **[Model Context Protocol](https://modelcontextprotocol.io/)** - The amazing protocol that makes this all possible
-- **Open source community** - For the incredible tools and libraries that power this project
 
 ## 👨‍💻 Author
 
 **João Medeiros** ([@joaomede](https://github.com/joaomede))
-- 🌐 Website: [joaomede.github.io](https://joaomede.github.io)
-- 📍 Location: São Paulo, Brazil
-- 💼 Analysis and Systems Development | Data Science
 
----
 
 ✨ Let's build the future of interoperable AI tooling together!
