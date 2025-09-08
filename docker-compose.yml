@@ -28,14 +28,6 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
     command: [
       "--config", "/app/config/config.json",
       "--port", "8000",
