@@ -39,3 +39,7 @@ docker-volumes/
 # OS
 .DS_Store
 Thumbs.db
+
+# Ignore coverage files
+cov.txt
+cov2.txt
