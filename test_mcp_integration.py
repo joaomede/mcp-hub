@@ -116,6 +116,19 @@ class MCPHubTester:
             # Test the MCP endpoint - mounted at /{server_name}/mcp/
             url = f"{self.base_url}/{server_name}/mcp/"
             
+            # Initialize session first (MCP requirement for some servers/clients)
+            init_request = {
+                "jsonrpc": "2.0",
+                "id": 0,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "mcp-hub-test", "version": "1.0.0"}
+                }
+            }
+            requests.post(url, json=init_request, timeout=10)
+
             # Send a simple MCP list_tools request
             mcp_request = {
                 "jsonrpc": "2.0",
@@ -146,6 +159,19 @@ class MCPHubTester:
         try:
             url = f"{self.base_url}/{server_name}/mcp/"
             
+            # Initialize session first
+            init_request = {
+                "jsonrpc": "2.0",
+                "id": 0,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "mcp-hub-test", "version": "1.0.0"}
+                }
+            }
+            requests.post(url, json=init_request, timeout=10)
+
             # List available tools
             mcp_request = {
                 "jsonrpc": "2.0",
@@ -191,8 +217,19 @@ class MCPHubTester:
         try:
             url = f"{self.base_url}/{server_name}/mcp/"
             
-            # Try to get server info via tools/list instead of initialize
-            # which is simpler and doesn't require session management
+            # Initialize session first to ensure tools/list is allowed
+            init_request = {
+                "jsonrpc": "2.0",
+                "id": 0,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "mcp-hub-test", "version": "1.0.0"}
+                }
+            }
+            requests.post(url, json=init_request, timeout=10)
+            
             mcp_request = {
                 "jsonrpc": "2.0",
                 "id": 1,

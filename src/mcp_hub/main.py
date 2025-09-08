@@ -134,17 +134,19 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
         if not session:
             raise HTTPException(status_code=503, detail="MCP server not connected")
 
-        # Session management: get or create session_id from header or param
+        # Session management: get session_id from header/param/body; if absent, derive a stable anon key from client IP + UA
         session_id = request.headers.get("x-session-id")
         if not session_id:
-            # Try query param
             session_id = request.query_params.get("sessionId")
         if not session_id:
-            # Try body param (for n8n)
             session_id = request_data.get("sessionId")
         if not session_id:
-            # Generate a new session id (stateless fallback)
-            session_id = str(uuid.uuid4())
+            # Derive a stable anonymous session per client to support clients (e.g., n8n) that don't persist a sessionId
+            client_ip = getattr(request.client, 'host', 'unknown')
+            user_agent = request.headers.get('user-agent', '')
+            import hashlib
+            anon_fingerprint = hashlib.sha256(f"{client_ip}|{user_agent}".encode("utf-8")).hexdigest()[:16]
+            session_id = f"anon:{anon_fingerprint}"
 
         # Get or create session state
         http_sessions = app.state.http_sessions
@@ -156,18 +158,29 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
             # Extract method and params from MCP request
             method = request_data.get("method")
             params = request_data.get("params", {})
+            req_id = request_data.get("id")
 
             if method == "initialize":
                 # Mark session as initialized
                 sess_state["initialized"] = True
-                return {"result": {"sessionId": session_id}}
+                # Return MCP-compliant initialize result; include sessionId for clients that want to persist it
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "result": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {"tools": {}},
+                        "serverInfo": {"name": app.title, "version": "1.0"},
+                        "sessionId": session_id,
+                    },
+                }
 
             elif method == "tools/list":
                 # Enforce MCP: require initialize first
                 if not sess_state["initialized"]:
                     return {
                         "jsonrpc": "2.0",
-                        "id": request_data.get("id"),
+                        "id": req_id,
                         "error": {
                             "code": -32000,
                             "message": "Bad Request: Server not initialized"
@@ -175,16 +188,18 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
                     }
                 result = await session.list_tools()
                 return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
                     "result": {
                         "tools": [
                             {
                                 "name": tool.name,
                                 "description": tool.description,
-                                "inputSchema": tool.inputSchema
+                                "inputSchema": tool.inputSchema,
                             }
                             for tool in result.tools
                         ]
-                    }
+                    },
                 }
 
             elif method == "tools/call":
@@ -192,7 +207,7 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
                 if not sess_state["initialized"]:
                     return {
                         "jsonrpc": "2.0",
-                        "id": request_data.get("id"),
+                        "id": req_id,
                         "error": {
                             "code": -32000,
                             "message": "Bad Request: Server not initialized"
@@ -208,13 +223,15 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
                 else:
                     result = await session.call_tool(tool_name)
                 return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
                     "result": {
                         "content": [
                             {"type": content.type, "text": content.text}
                             if hasattr(content, 'text') else {"type": content.type}
                             for content in result.content
                         ]
-                    }
+                    },
                 }
             else:
                 raise HTTPException(status_code=400, detail=f"Unsupported method: {method}")
