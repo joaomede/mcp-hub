@@ -30,7 +30,7 @@ jobs:
           uv sync --dev || pip install -r requirements.txt || pip install -r requirements-dev.txt || true
       - name: Install test dependencies
         run: |
-          pip install pytest pytest-asyncio pytest-cov fastapi starlette watchdog passlib typer uvicorn
+          pip install pytest pytest-asyncio pytest-cov fastapi starlette watchdog passlib typer uvicorn python-dotenv
       - name: Run unit tests with coverage
         run: |
           PYTHONPATH=src pytest --cov=src/mcp_hub tests/unit --cov-report=term-missing -v
