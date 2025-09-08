@@ -7,6 +7,8 @@ __pycache__/
 # Python-generated files
 __pycache__/
 *.py[oc]
+coverage.out
+.coverage
 build/
 dist/
 wheels/
