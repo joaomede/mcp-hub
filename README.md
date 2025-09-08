@@ -71,23 +71,22 @@ You can also run MCP Hub via Docker with no installation:
 docker run -p 8000:8000 ghcr.io/joaomede/mcp-hub:main --api-key "secret" -- your_mcp_server_command
 ```
 
+
 **Docker Compose (Recommended for Development & Production):**
 
-For a complete development and production setup, use Docker Compose:
+Para subir em qualquer ambiente (dev ou produção):
 
 ```bash
-# Quick start with management script
-./docker.sh dev      # Development mode
-./docker.sh prod     # Production mode
-./docker.sh logs     # View logs
-./docker.sh stop     # Stop services
+# Subir ambiente (foreground, logs no terminal)
+docker-compose up --build
 
-# Or use docker-compose directly
-docker-compose up --build                                                    # Development
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build # Production
+# Ou para rodar em background (produção)
+docker-compose up -d --build
 ```
 
-See [DOCKER.md](DOCKER.md) for detailed Docker setup instructions.
+> Defina a variável MCP_HUB_API_KEY no seu `.env` para proteger a API em produção.
+
+Veja [DOCKER.md](DOCKER.md) para instruções detalhadas.
 
 Tip: copy the example configuration before starting services:
 

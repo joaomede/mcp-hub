@@ -8,29 +8,39 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - MCP_HUB_API_KEY=${MCP_HUB_API_KEY:-default-api-key}
+      # Defina MCP_HUB_API_KEY no .env para produção segura!
+      - MCP_HUB_API_KEY=${MCP_HUB_API_KEY:-change-me-in-prod}
       - MCP_HUB_LOG_LEVEL=warning
     volumes:
       - ./config:/app/config:ro
       - ./logs:/app/logs
-      # Uncomment the next line if you use the git server and want to mount a repo
-      # - /caminho/para/seu/repo:/repo:ro
-    networks:
-      - mcp-network
+      # Para usar o servidor git, monte um repositório real:
+      # - /caminho/absoluto/para/seu/repo:/repo:ro
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    # Tip: to enable config hot-reload inside the container, add "--hot-reload" below
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health", "--max-time", "5"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
     command: [
       "--config", "/app/config/config.json",
       "--port", "8000",
-      "--api-key", "${MCP_HUB_API_KEY:-default-api-key}"
+      "--api-key", "${MCP_HUB_API_KEY:-change-me-in-prod}",
+      "--strict-auth"
     ]
 
-networks:
-  mcp-network:
-    driver: bridge
+
