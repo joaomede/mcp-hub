@@ -29,6 +29,7 @@ docker-volumes/
 
 # IDE
 .vscode/
+.github/copilot-instructions.md
 .idea/
 *.swp
 *.swo
