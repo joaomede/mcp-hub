@@ -212,16 +212,22 @@ To contribute or run tests locally:
     git clone https://github.com/joaomede/mcp-hub.git
     cd mcp-hub
 
-    # Install dependencies (including dev dependencies)
-    uv sync --dev
+    # Run the venv setup script
+    bash setup_venv.sh
     ```
 
-2.  **Run unit tests:**
+2.  **Configure environment variables:**
+    - Copy `.env.example` to `.env` and customize as needed:
+      ```bash
+      cp .env.example .env
+      ```
+
+3.  **Run unit tests:**
     ```bash
     uv run pytest
     ```
 
-3.  **Run integration tests:**
+4.  **Run integration tests:**
     ```bash
     # Build Docker image first
     docker build -t mcp-hub:latest .
@@ -237,7 +243,7 @@ To contribute or run tests locally:
     - ✅ HTTP endpoint routing (`/{server-name}/mcp/`)
     - ✅ MCP protocol compliance
 
-4.  **Running Locally with Active Changes:**
+5.  **Running Locally with Active Changes:**
 
     To run `mcp-hub` with your local modifications from a specific branch (e.g., `my-feature-branch`):
 
