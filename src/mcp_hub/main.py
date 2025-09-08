@@ -283,7 +283,7 @@ async def reload_config_handler(main_app: FastAPI, new_config_data: Dict[str, An
                         server_name, server_cfg, cors_allow_origins, api_key,
                         strict_auth, api_dependency, connection_timeout, lifespan
                     )
-                    main_app.mount(f"{path_prefix}{server_name}", sub_app)
+                    main_app.mount(f"{path_prefix}{server_name}/mcp", sub_app)
                 except Exception as e:
                     logger.error(f"Failed to create server '{server_name}': {e}")
                     # Rollback on failure
