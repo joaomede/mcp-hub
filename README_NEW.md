@@ -1,14 +1,12 @@
-# ⚡️ MCP Hub
+# ⚡️ mcpo
 
-**A powerful MCP Gateway for aggregating multiple Model Context Protocol servers.**
+**MCP Gateway** - A powerful proxy and aggregator for Model Context Protocol (MCP) servers.
 
-MCP Hub is a simple yet robust gateway that aggregates multiple MCP servers into a single endpoint, providing unified access, authentication, and management for your MCP tools without any protocol conversion.
+mcpo is a simple yet robust gateway that aggregates multiple MCP servers into a single endpoint, providing unified access, authentication, and management for your MCP tools without any protocol conversion.
 
 Pure MCP-to-MCP. No conversions. No hassle.
 
-> **Note**: This project is inspired by and evolved from [mcpo](https://github.com/open-webui/mcpo) by Timothy Jaeryang Baek. MCP Hub focuses on pure MCP protocol forwarding without OpenAPI conversion, providing a clean gateway solution for MCP server aggregation.
-
-## 🤔 Why Use MCP Hub?
+## 🤔 Why Use MCP Gateway?
 
 Managing multiple MCP servers individually is complex:
 
@@ -17,7 +15,7 @@ Managing multiple MCP servers individually is complex:
 - 🧩 No unified discovery or routing
 - 📊 Scattered monitoring and logging
 
-MCP Hub solves all of that:
+MCP Gateway solves all of that:
 
 - ✅ **Single Entry Point**: One gateway for all your MCP servers
 - 🛡 **Unified Security**: Centralized authentication and authorization  
@@ -27,60 +25,60 @@ MCP Hub solves all of that:
 
 What feels like "one more layer" is actually **simplification at scale**.
 
-MCP Hub makes your MCP infrastructure manageable, secure, and scalable—right now, with zero complexity.
+MCP Gateway makes your MCP infrastructure manageable, secure, and scalable—right now, with zero complexity.
 
 ## 🚀 Quick Usage
 
 We recommend using uv for lightning-fast startup and zero config.
 
 ```bash
-uvx mcp-hub --port 8000 --api-key "top-secret" -- your_mcp_server_command
+uvx mcpo --port 8000 --api-key "top-secret" -- your_mcp_server_command
 ```
 
 Or, if you're using Python:
 
 ```bash
-pip install mcp-hub
-mcp-hub --port 8000 --api-key "top-secret" -- your_mcp_server_command
+pip install mcpo
+mcpo --port 8000 --api-key "top-secret" -- your_mcp_server_command
 ```
 
 **Single MCP Server Examples:**
 
 ```bash
 # Proxy a single MCP server (available at /mcp)
-mcp-hub --port 8000 --api-key "secret" -- uvx mcp-server-time --local-timezone=America/New_York
+mcpo --port 8000 --api-key "secret" -- uvx mcp-server-time --local-timezone=America/New_York
 ```
 
 **Multiple MCP Servers (Recommended):**
 
 ```bash
 # Use config file for multiple servers
-mcp-hub --config config.json --hot-reload --port 8000 --api-key "secret"
+mcpo --config config.json --hot-reload --port 8000 --api-key "secret"
 ```
 
 **SSE and HTTP MCP Servers:**
 
 ```bash
 # SSE MCP server
-mcp-hub --port 8000 --api-key "secret" --server-type "sse" -- http://127.0.0.1:8001/sse
+mcpo --port 8000 --api-key "secret" --server-type "sse" -- http://127.0.0.1:8001/sse
 
 # With custom headers
-mcp-hub --port 8000 --api-key "secret" --server-type "sse" --header '{"Authorization": "Bearer token"}' -- http://127.0.0.1:8001/sse
+mcpo --port 8000 --api-key "secret" --server-type "sse" --header '{"Authorization": "Bearer token"}' -- http://127.0.0.1:8001/sse
 
 # Streamable HTTP MCP server  
-mcp-hub --port 8000 --api-key "secret" --server-type "streamable-http" -- http://127.0.0.1:8002/mcp
+mcpo --port 8000 --api-key "secret" --server-type "streamable-http" -- http://127.0.0.1:8002/mcp
 ```
 
-You can also run MCP Hub via Docker with no installation:
+You can also run mcpo via Docker with no installation:
 
 ```bash
-docker run -p 8000:8000 ghcr.io/joaomede/mcp-hub:main --api-key "secret" -- your_mcp_server_command
+docker run -p 8000:8000 ghcr.io/open-webui/mcpo:main --api-key "secret" -- your_mcp_server_command
 ```
 
 **Example - Single Server:**
 
 ```bash
-uvx mcp-hub --port 8000 --api-key "secret" -- uvx mcp-server-time --local-timezone=America/New_York
+uvx mcpo --port 8000 --api-key "secret" -- uvx mcp-server-time --local-timezone=America/New_York
 ```
 
 Your MCP server is now accessible at:
@@ -96,13 +94,13 @@ Enable hot-reload mode with `--hot-reload` to automatically watch your config fi
 **Start via:**
 
 ```bash
-mcp-hub --config /path/to/config.json
+mcpo --config /path/to/config.json
 ```
 
 **Or with hot-reload enabled:**
 
 ```bash
-mcp-hub --config /path/to/config.json --hot-reload
+mcpo --config /path/to/config.json --hot-reload
 ```
 
 **Example config.json:**
@@ -144,7 +142,7 @@ Connect your MCP client to any of these endpoints to access the tools from that 
 
 ## 🔧 Requirements
 
-- Python 3.11+
+- Python 3.8+
 - uv (optional, but highly recommended for performance + packaging)
 
 ## 🛠️ Development & Testing
@@ -154,8 +152,8 @@ To contribute or run tests locally:
 1.  **Set up the environment:**
     ```bash
     # Clone the repository
-    git clone https://github.com/joaomede/mcp-hub.git
-    cd mcp-hub
+    git clone https://github.com/open-webui/mcpo.git
+    cd mcpo
 
     # Install dependencies (including dev dependencies)
     uv sync --dev
@@ -168,22 +166,22 @@ To contribute or run tests locally:
 
 3.  **Running Locally with Active Changes:**
 
-    To run `mcp-hub` with your local modifications from a specific branch (e.g., `my-feature-branch`):
+    To run `mcpo` with your local modifications from a specific branch (e.g., `my-feature-branch`):
 
     ```bash
     # Ensure you are on your development branch
     git checkout my-feature-branch
 
-    # Make your code changes in the src/mcp_hub directory or elsewhere
+    # Make your code changes in the src/mcpo directory or elsewhere
 
-    # Run mcp-hub using uv, which will use your local, modified code
-    # This command starts mcp-hub on port 8000 and proxies your_mcp_server_command
-    uv run mcp-hub --port 8000 -- your_mcp_server_command
+    # Run mcpo using uv, which will use your local, modified code
+    # This command starts mcpo on port 8000 and proxies your_mcp_server_command
+    uv run mcpo --port 8000 -- your_mcp_server_command
 
     # Example with a test MCP server (like mcp-server-time):
-    # uv run mcp-hub --port 8000 -- uvx mcp-server-time --local-timezone=America/New_York
+    # uv run mcpo --port 8000 -- uvx mcp-server-time --local-timezone=America/New_York
     ```
-    This allows you to test your changes interactively before committing or creating a pull request. Access your locally running `mcp-hub` instance at `http://localhost:8000` and connect MCP clients to the `/mcp` endpoints.
+    This allows you to test your changes interactively before committing or creating a pull request. Access your locally running `mcpo` instance at `http://localhost:8000` and connect MCP clients to the `/mcp` endpoints.
 
 ## 🪪 License
 
@@ -193,7 +191,7 @@ MIT
 
 We welcome and strongly encourage contributions from the community!
 
-Whether you're fixing a bug, adding features, improving documentation, or just sharing ideas—your input is incredibly valuable and helps make MCP Hub better for everyone.
+Whether you're fixing a bug, adding features, improving documentation, or just sharing ideas—your input is incredibly valuable and helps make mcpo better for everyone.
 
 Getting started is easy:
 
@@ -204,18 +202,15 @@ Getting started is easy:
 
 Not sure where to start? Feel free to open an issue or ask a question—we're happy to help you find a good first task.
 
-## 🙏 Acknowledgments
+## ✨ Star History
 
-- **[mcpo](https://github.com/open-webui/mcpo)** by Timothy Jaeryang Baek - The original inspiration and foundation for this project
-- **[Model Context Protocol](https://modelcontextprotocol.io/)** - The amazing protocol that makes this all possible
-- **Open source community** - For the incredible tools and libraries that power this project
-
-## 👨‍💻 Author
-
-**João Medeiros** ([@joaomede](https://github.com/joaomede))
-- 🌐 Website: [joaomede.github.io](https://joaomede.github.io)
-- 📍 Location: São Paulo, Brazil
-- 💼 Analysis and Systems Development | Data Science
+<a href="https://star-history.com/#open-webui/mcpo&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=open-webui/mcpo&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=open-webui/mcpo&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=open-webui/mcpo&type=Date" />
+  </picture>
+</a>
 
 ---
 

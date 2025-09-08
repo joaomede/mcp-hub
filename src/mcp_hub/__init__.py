@@ -74,7 +74,7 @@ def main(
     if not config_path:
         # Find the position of "--"
         if "--" not in sys.argv:
-            typer.echo("Usage: mcpo --host 0.0.0.0 --port 8000 -- your_mcp_command")
+            typer.echo("Usage: mcp-hub --host 0.0.0.0 --port 8000 -- your_mcp_command")
             raise typer.Exit(1)
 
         idx = sys.argv.index("--")
@@ -84,13 +84,13 @@ def main(
             typer.echo("Error: You must specify the MCP server command after '--'")
             return
 
-    from mcpo.main import run
+    from mcp_hub.main import run
 
     if config_path:
-        print("Starting MCP OpenAPI Proxy with config file:", config_path)
+        print("Starting MCP Hub with config file:", config_path)
     else:
         print(
-            f"Starting MCP OpenAPI Proxy on {host}:{port} with command: {' '.join(server_command)}"
+            f"Starting MCP Hub on {host}:{port} with command: {' '.join(server_command)}"
         )
 
     try:
@@ -122,7 +122,7 @@ def main(
     if not path_prefix.startswith("/"):
         path_prefix = f"/{path_prefix}"
 
-    # Run your async run function from mcpo.main
+    # Run your async run function from mcp_hub.main
     asyncio.run(
         run(
             host,

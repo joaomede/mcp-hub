@@ -5,12 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-# Changelog
+## [1.0.0] - 2025-09-07
 
-All notable changes to this project will be documented in this file.
+### � Initial Release
 
-The format is based on Keep a Changelog,
-and this project adheres to Semantic Versioning.
+**MCP Hub** - A pure MCP Gateway for aggregating multiple Model Context Protocol servers.
+
+### Features
+
+- ✅ **Pure MCP Protocol**: Direct MCP protocol proxying without any conversion
+- ✅ **Multi-Server Aggregation**: Manage multiple MCP servers through a single endpoint
+- ✅ **Smart Routing**: Clean path-based routing at `/[server-name]/mcp` endpoints
+- ✅ **Unified Authentication**: Centralized API key authentication for all servers
+- ✅ **Hot Reload**: Dynamic configuration reloading without service restart
+- ✅ **Multiple Transport Types**: Support for stdio, SSE, and streamable-http MCP servers
+- ✅ **CORS Support**: Configurable cross-origin resource sharing
+- ✅ **SSL Support**: Built-in HTTPS/TLS encryption capabilities
+- ✅ **Graceful Shutdown**: Proper connection cleanup and server lifecycle management
+
+### Supported MCP Server Types
+
+- **stdio**: Standard input/output MCP servers
+- **sse**: Server-Sent Events MCP servers
+- **streamable-http**: HTTP-based streaming MCP servers
+
+### Architecture
+
+MCP Hub acts as a pure gateway, maintaining full MCP protocol semantics while providing:
+- Centralized endpoint management
+- Unified security layer
+- Configuration-driven server mounting
+- Real-time configuration updates
+
+### Configuration
+
+Supports Claude Desktop compatible configuration format:
+
+```json
+{
+  "mcpServers": {
+    "server-name": {
+      "command": "command",
+      "args": ["arg1", "arg2"]
+    }
+  }
+}
+```
+
+### Acknowledgments
+
+This project is inspired by and evolved from [mcpo](https://github.com/open-webui/mcpo) by Timothy Jaeryang Baek. MCP Hub focuses specifically on pure MCP protocol forwarding, providing a clean gateway solution for MCP server aggregation without OpenAPI conversion.
+
+---
+
+**Migration from mcpo**: If you're coming from mcpo, the main difference is that MCP Hub provides pure MCP endpoints at `/[server-name]/mcp` instead of REST API endpoints. Connect your MCP clients directly to these endpoints for native protocol communication.
 
 ## [0.0.17] - 2025-07-22
 

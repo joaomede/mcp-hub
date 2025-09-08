@@ -1,12 +1,24 @@
 [project]
-name = "mcpo"
-version = "0.0.17"
-description = "A simple, secure MCP-to-OpenAPI proxy server"
+name = "mcp-hub"
+version = "1.0.0"
+description = "A powerful MCP Gateway for aggregating multiple Model Context Protocol servers"
 authors = [
-    { name = "Timothy Jaeryang Baek", email = "tim@openwebui.com" }
+    { name = "João Medeiros", email = "joaomede@users.noreply.github.com" }
 ]
 readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = ["mcp", "model-context-protocol", "gateway", "proxy", "aggregator"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+]
 dependencies = [
     "click>=8.1.8",
     "fastapi>=0.115.12",
@@ -22,7 +34,12 @@ dependencies = [
 ]
 
 [project.scripts]
-mcpo = "mcpo:app"
+mcp-hub = "mcp_hub:app"
+
+[project.urls]
+Homepage = "https://github.com/joaomede/mcp-hub"
+Repository = "https://github.com/joaomede/mcp-hub"
+Issues = "https://github.com/joaomede/mcp-hub/issues"
 
 [build-system]
 requires = ["hatchling"]

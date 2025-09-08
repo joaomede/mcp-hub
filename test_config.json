@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "echo",
+      "args": ["test-memory-server"]
+    },
+    "time": {
+      "command": "echo", 
+      "args": ["test-time-server"]
+    }
+  }
+}

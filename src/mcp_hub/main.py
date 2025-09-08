@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any
 from urllib.parse import urljoin
 
 import uvicorn
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.routing import Mount
 
@@ -18,15 +18,9 @@ from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
 
-from mcpo.utils.auth import APIKeyMiddleware, get_verify_api_key
-from mcpo.utils.main import (
-    get_model_fields,
-    get_tool_handler,
-    normalize_server_type,
-)
-from mcpo.utils.main import get_model_fields, get_tool_handler
-from mcpo.utils.auth import get_verify_api_key, APIKeyMiddleware
-from mcpo.utils.config_watcher import ConfigWatcher
+from mcp_hub.utils.auth import APIKeyMiddleware, get_verify_api_key
+from mcp_hub.utils.main import normalize_server_type
+from mcp_hub.utils.config_watcher import ConfigWatcher
 
 
 logger = logging.getLogger(__name__)
@@ -102,8 +96,8 @@ def create_sub_app(server_name: str, server_cfg: Dict[str, Any], cors_allow_orig
                    connection_timeout, lifespan) -> FastAPI:
     """Create a sub-application for an MCP server."""
     sub_app = FastAPI(
-        title=f"{server_name}",
-        description=f"{server_name} MCP Server\n\n- [back to tool list](/docs)",
+        title=f"{server_name} MCP Proxy",
+        description=f"MCP Proxy for {server_name} server",
         version="1.0",
         lifespan=lifespan,
     )
@@ -147,7 +141,64 @@ def create_sub_app(server_name: str, server_cfg: Dict[str, Any], cors_allow_orig
     sub_app.state.api_dependency = api_dependency
     sub_app.state.connection_timeout = connection_timeout
 
+    # Add MCP proxy endpoint
+    create_mcp_proxy_endpoint(sub_app, api_dependency)
+
     return sub_app
+
+
+def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
+    """Create MCP proxy endpoint that forwards requests directly to MCP server."""
+    
+    @app.post("/")
+    async def mcp_proxy(request_data: dict):
+        """Proxy MCP requests directly to the connected MCP server."""
+        session = getattr(app.state, 'session', None)
+        if not session:
+            raise HTTPException(status_code=503, detail="MCP server not connected")
+        
+        try:
+            # Extract method and params from MCP request
+            method = request_data.get("method")
+            params = request_data.get("params", {})
+            
+            if method == "tools/call":
+                # Handle tool calls
+                tool_name = params.get("name")
+                arguments = params.get("arguments", {})
+                result = await session.call_tool(tool_name, arguments=arguments)
+                
+                # Return raw MCP response
+                return {
+                    "result": {
+                        "content": [
+                            {"type": content.type, "text": content.text} 
+                            if hasattr(content, 'text') else {"type": content.type}
+                            for content in result.content
+                        ]
+                    }
+                }
+            elif method == "tools/list":
+                # Handle tool listing
+                result = await session.list_tools()
+                return {
+                    "result": {
+                        "tools": [
+                            {
+                                "name": tool.name,
+                                "description": tool.description,
+                                "inputSchema": tool.inputSchema
+                            }
+                            for tool in result.tools
+                        ]
+                    }
+                }
+            else:
+                raise HTTPException(status_code=400, detail=f"Unsupported method: {method}")
+                
+        except Exception as e:
+            logger.error(f"MCP proxy error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 def mount_config_servers(main_app: FastAPI, config_data: Dict[str, Any],
@@ -162,13 +213,13 @@ def mount_config_servers(main_app: FastAPI, config_data: Dict[str, Any],
             server_name, server_cfg, cors_allow_origins, api_key,
             strict_auth, api_dependency, connection_timeout, lifespan
         )
-        main_app.mount(f"{path_prefix}{server_name}", sub_app)
+        main_app.mount(f"{path_prefix}{server_name}/mcp", sub_app)
 
 
 def unmount_servers(main_app: FastAPI, path_prefix: str, server_names: list):
     """Unmount specific MCP servers."""
     for server_name in server_names:
-        mount_path = f"{path_prefix}{server_name}"
+        mount_path = f"{path_prefix}{server_name}/mcp"
         # Find and remove the mount
         routes_to_remove = []
         for route in main_app.router.routes:
@@ -250,66 +301,6 @@ async def reload_config_handler(main_app: FastAPI, new_config_data: Dict[str, An
         raise
 
 
-async def create_dynamic_endpoints(app: FastAPI, api_dependency=None):
-    session: ClientSession = app.state.session
-    if not session:
-        raise ValueError("Session is not initialized in the app state.")
-
-    result = await session.initialize()
-    server_info = getattr(result, "serverInfo", None)
-    if server_info:
-        app.title = server_info.name or app.title
-        app.description = (
-            f"{server_info.name} MCP Server" if server_info.name else app.description
-        )
-        app.version = server_info.version or app.version
-
-    instructions = getattr(result, "instructions", None)
-    if instructions:
-        app.description = instructions
-
-    tools_result = await session.list_tools()
-    tools = tools_result.tools
-
-    for tool in tools:
-        endpoint_name = tool.name
-        endpoint_description = tool.description
-
-        inputSchema = tool.inputSchema
-        outputSchema = getattr(tool, "outputSchema", None)
-
-        form_model_fields = get_model_fields(
-            f"{endpoint_name}_form_model",
-            inputSchema.get("properties", {}),
-            inputSchema.get("required", []),
-            inputSchema.get("$defs", {}),
-        )
-
-        response_model_fields = None
-        if outputSchema:
-            response_model_fields = get_model_fields(
-                f"{endpoint_name}_response_model",
-                outputSchema.get("properties", {}),
-                outputSchema.get("required", []),
-                outputSchema.get("$defs", {}),
-            )
-
-        tool_handler = get_tool_handler(
-            session,
-            endpoint_name,
-            form_model_fields,
-            response_model_fields,
-        )
-
-        app.post(
-            f"/{endpoint_name}",
-            summary=endpoint_name.replace("_", " ").title(),
-            description=endpoint_description,
-            response_model_exclude_none=True,
-            dependencies=[Depends(api_dependency)] if api_dependency else [],
-        )(tool_handler)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     server_type = normalize_server_type(getattr(app.state, "server_type", "stdio"))
@@ -379,10 +370,10 @@ async def lifespan(app: FastAPI):
                 logger.info("Successfully connected to:")
                 for name in successful_servers:
                     logger.info(f"  - {name}")
-                app.description += "\n\n- **available tools**："
+                app.description += "\n\n- **Available MCP servers**："
                 for name in successful_servers:
-                    docs_path = urljoin(path_prefix, f"{name}/docs")
-                    app.description += f"\n    - [{name}]({docs_path})"
+                    mcp_path = urljoin(path_prefix, f"{name}/mcp")
+                    app.description += f"\n    - [{name}]({mcp_path}) - MCP endpoint"
             if failed_servers:
                 logger.warning("Failed to connect to:")
                 for name in failed_servers:
@@ -422,7 +413,6 @@ async def lifespan(app: FastAPI):
             async with client_context as (reader, writer, *_):
                 async with ClientSession(reader, writer) as session:
                     app.state.session = session
-                    await create_dynamic_endpoints(app, api_dependency=api_dependency)
                     app.state.is_connected = True
                     yield
         except Exception as e:
@@ -453,10 +443,10 @@ async def run(
     # MCP Config
     config_path = kwargs.get("config_path")
 
-    # mcpo server
-    name = kwargs.get("name") or "MCP OpenAPI Proxy"
+    # mcp-hub server
+    name = kwargs.get("name") or "MCP Gateway"
     description = (
-        kwargs.get("description") or "Automatically generated API from MCP Tool Schemas"
+        kwargs.get("description") or "MCP Gateway - Proxy and aggregator for MCP servers"
     )
     version = kwargs.get("version") or "1.0"
 
@@ -479,7 +469,7 @@ async def run(
     # Apply filter to suppress HTTP request logs
     logging.getLogger("uvicorn.access").addFilter(HTTPRequestFilter())
     logging.getLogger("httpx.access").addFilter(HTTPRequestFilter())
-    logger.info("Starting MCPO Server...")
+    logger.info("Starting MCP Gateway...")
     logger.info(f"  Name: {name}")
     logger.info(f"  Version: {version}")
     logger.info(f"  Description: {description}")
@@ -573,7 +563,7 @@ async def run(
         main_app.state.lifespan = lifespan
         main_app.state.path_prefix = path_prefix
     else:
-        logger.error("MCPO server_command or config_path must be provided.")
+        logger.error("MCP Hub server_command or config_path must be provided.")
         raise ValueError("You must provide either server_command or config.")
 
     # Setup hot reload if enabled and config_path is provided

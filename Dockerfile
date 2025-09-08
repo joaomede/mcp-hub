@@ -17,7 +17,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
 # Confirm npm and node versions (optional debugging info)
 RUN node -v && npm -v
 
-# Copy your mcpo source code (assuming in src/mcpo)
+# Copy your mcp-hub source code (assuming in src/mcp_hub)
 COPY . /app
 WORKDIR /app
 
@@ -26,17 +26,17 @@ ENV VIRTUAL_ENV=/app/.venv
 RUN uv venv "$VIRTUAL_ENV"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Install mcpo (assuming pyproject.toml is properly configured)
+# Install mcp-hub (assuming pyproject.toml is properly configured)
 RUN uv pip install . && rm -rf ~/.cache
 
-# Verify mcpo installed correctly
-RUN which mcpo
+# Verify mcp-hub installed correctly
+RUN which mcp-hub
 
 # Expose port (optional but common default)
 EXPOSE 8000
 
 # Entrypoint set for easy container invocation
-ENTRYPOINT ["mcpo"]
+ENTRYPOINT ["mcp-hub"]
 
 # Default help CMD (can override at runtime)
 CMD ["--help"]
