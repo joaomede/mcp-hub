@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/joaomede/mcp-hub/compare/v1.0.10...v1.1.0) (2025-09-08)
+
+
+### Features
+
+* atualiza arquivos do projeto ([1327aef](https://github.com/joaomede/mcp-hub/commit/1327aefd87fc910671d0427ba0a31f0bfa5be824))
+
+
+### Bug Fixes
+
+* correct YAML syntax errors in ci-release workflow - fix broken lines ([4cceffe](https://github.com/joaomede/mcp-hub/commit/4cceffe4acb458c7c97366dc9d223e70757dedff))
+* robust config watcher loop fallback; graceful-shutdown & logging fixes; venv setup improvements ([ef97fb9](https://github.com/joaomede/mcp-hub/commit/ef97fb9f718d7759f2bfbc423d734d6e12e2ac58))
+
 ### [1.0.15](https://github.com/joaomede/mcp-hub/compare/v1.0.16...v1.0.15) (2025-09-08)
 
 ### [1.0.14](https://github.com/joaomede/mcp-hub/compare/v1.0.16...v1.0.14) (2025-09-08)
