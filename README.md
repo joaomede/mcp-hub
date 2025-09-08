@@ -8,6 +8,15 @@ Pure stdio MCP-to-MCP aggregation. No external servers. No complexity.
 
 > **Note**: This project is adapted from [mcpo](https://github.com/open-webui/mcpo) with a focus on **pure stdio MCP aggregation** rather than mixed transport support, providing a clean gateway solution for stdio MCP server management only.
 
+## ✅ Compatibility Highlights
+
+- MCP stdio servers (official memory, filesystem, time, git, and compatible Python/Node servers)
+- HTTP MCP clients that speak JSON-RPC to the hub’s `/mcp` endpoints
+- n8n MCP Client pattern: the hub supports an HTTP session model that expects `initialize` before `tools/list` and `tools/call` for the same session
+  - Provide a session via `x-session-id` header or `?sessionId=` query param
+  - If omitted, the hub generates a new session and returns it in the `initialize` response
+  - `tools/list` and `tools/call` return JSON-RPC–shaped errors until `initialize` is performed for that session
+
 ## 🤔 Why Use MCP Hub?
 
 Managing multiple MCP servers individually is complex:
@@ -139,10 +148,9 @@ Connect your MCP client to any of these endpoints to access the tools from that 
 
 📖 **For detailed usage instructions, examples, and best practices, see [USAGE.md](USAGE.md)**
 
-### � Running without API keys (keyless mode)
+### 🔓 Running without API keys (keyless mode)
 
-By default, Docker Compose provides a non-empty API key. To run without auth:
-
+By default, Docker Compose provides a non-empty API key. To run without auth, set an empty value:
 
 ```
 MCP_HUB_API_KEY=
@@ -150,7 +158,53 @@ MCP_HUB_API_KEY=
 
 When no API key is provided (empty), authentication is disabled. For public deployments, keep a strong key or place the service behind a trusted proxy.
 
-## �🔧 Requirements
+## � Requirements
+
+- Python 3.11+
+- uv or pip + virtualenv
+- Docker (optional) and Docker Compose (optional)
+
+## 🗺️ Proxy Flow (Mermaid)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Client as HTTP Client / n8n
+  participant Hub as MCP Hub (HTTP Proxy)
+  participant Stdio as MCP Server (stdio)
+
+  Note over Client,Hub: Session establishment (HTTP level)
+  Client->>Hub: POST /{server}/mcp { jsonrpc: "2.0", id, method: "initialize", params }
+  alt No x-session-id or ?sessionId=
+    Hub-->>Client: { result: { sessionId }, jsonrpc: "2.0", id }
+  else Existing session provided
+    Hub-->>Client: { result: {}, jsonrpc: "2.0", id }
+  end
+
+  Note over Hub,Stdio: On startup, Hub performs stdio MCP handshake
+  Hub->>Stdio: initialize() (stdio)
+  Stdio-->>Hub: serverInfo, capabilities
+
+  Note over Client,Hub: Tool discovery requires initialized HTTP session
+  Client->>Hub: POST /{server}/mcp { jsonrpc: "2.0", id, method: "tools/list" }
+  alt Session initialized
+    Hub->>Stdio: list_tools()
+    Stdio-->>Hub: tools[]
+    Hub-->>Client: { result: { tools }, jsonrpc: "2.0", id }
+  else Not initialized
+    Hub-->>Client: { error: { code: -32000, message: "Bad Request: Server not initialized" }, jsonrpc: "2.0", id }
+  end
+
+  Note over Client,Hub: Tool execution
+  Client->>Hub: POST /{server}/mcp { jsonrpc: "2.0", id, method: "tools/call", params: { name, arguments } }
+  alt Session initialized
+    Hub->>Stdio: call_tool(name, arguments)
+    Stdio-->>Hub: CallToolResult(content[])
+    Hub-->>Client: { result: { content[] }, jsonrpc: "2.0", id }
+  else Not initialized
+    Hub-->>Client: { error: { code: -32000, message: "Bad Request: Server not initialized" }, jsonrpc: "2.0", id }
+  end
+```
 
 
 ## 🛠️ Development & Testing

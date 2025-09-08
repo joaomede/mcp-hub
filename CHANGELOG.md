@@ -2,6 +2,17 @@
 # Changelog
 ## [Unreleased] - 2025-09-08
 
+### Added
+
+- ✅ HTTP session management for MCP over HTTP: sessions are tracked per client and marked as initialized after an `initialize` call. Pass the session via `x-session-id` header or `?sessionId=`; if omitted, the hub generates one and returns it in the `initialize` response.
+- ✅ n8n MCP Client compatibility: the HTTP proxy now handles MCP JSON-RPC methods (`initialize`, `tools/list`, `tools/call`) in the expected order and returns JSON-RPC–shaped errors when preconditions aren’t met.
+- 🧭 Documentation: README updates describing the new compatibility and a Mermaid diagram explaining the proxy flow end-to-end.
+
+### Changed
+
+- 🔒 `tools/list` and `tools/call` over HTTP now require a prior `initialize` for the same session, aligning behavior with MCP-compliant clients and servers.
+- 🧹 The HTTP proxy tolerates `initialize` from HTTP clients, marking the session as ready without impacting the underlying stdio handshake.
+
 ### Fixed
 
 - 🛠️ **MCP Handshake Compliance**: The hub now always calls `initialize()` on MCP sub-app startup, ensuring compatibility with Python FastMCP servers and preventing handshake errors.
@@ -9,6 +20,7 @@
 - 📝 **Type Hints in Config Watcher**: Fixed type hints for async config reload callbacks to use `Awaitable`, preventing runtime errors on hot reload.
 - 🧪 **Integration Test & Config**: Integration test now dynamically discovers all servers from `test_config.json` and mounts the host repo for the git server; config updated to support official memory, filesystem, time, and git servers.
 - 🏷️ **uv.lock Correction**: Fixed editable package name in `uv.lock` to `mcp-hub` for proper dependency resolution.
+- 🐳 **Compose cleanup**: Removed unsupported `--log-level` flag from compose command.
 
 ### Removed
 

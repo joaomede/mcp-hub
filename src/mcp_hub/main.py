@@ -120,20 +120,84 @@ def create_sub_app(server_name: str, server_cfg: Dict[str, Any], cors_allow_orig
 def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
     """Create MCP proxy endpoint that forwards requests directly to MCP server."""
     
+    # In-memory session store: {session_id: {"initialized": bool}}
+    if not hasattr(app.state, "http_sessions"):
+        app.state.http_sessions = {}
+
+    from fastapi import Request
+    import uuid
+
     @app.post("/")
-    async def mcp_proxy(request_data: dict):
-        """Proxy MCP requests directly to the connected MCP server."""
+    async def mcp_proxy(request: Request, request_data: dict):
+        """Proxy MCP requests directly to the connected MCP server with MCP-compliant session logic."""
         session = getattr(app.state, 'session', None)
         if not session:
             raise HTTPException(status_code=503, detail="MCP server not connected")
+
+        # Session management: get or create session_id from header or param
+        session_id = request.headers.get("x-session-id")
+        if not session_id:
+            # Try query param
+            session_id = request.query_params.get("sessionId")
+        if not session_id:
+            # Try body param (for n8n)
+            session_id = request_data.get("sessionId")
+        if not session_id:
+            # Generate a new session id (stateless fallback)
+            session_id = str(uuid.uuid4())
+
+        # Get or create session state
+        http_sessions = app.state.http_sessions
+        if session_id not in http_sessions:
+            http_sessions[session_id] = {"initialized": False}
+        sess_state = http_sessions[session_id]
 
         try:
             # Extract method and params from MCP request
             method = request_data.get("method")
             params = request_data.get("params", {})
 
-            if method == "tools/call":
-                # ...existing code...
+            if method == "initialize":
+                # Mark session as initialized
+                sess_state["initialized"] = True
+                return {"result": {"sessionId": session_id}}
+
+            elif method == "tools/list":
+                # Enforce MCP: require initialize first
+                if not sess_state["initialized"]:
+                    return {
+                        "jsonrpc": "2.0",
+                        "id": request_data.get("id"),
+                        "error": {
+                            "code": -32000,
+                            "message": "Bad Request: Server not initialized"
+                        }
+                    }
+                result = await session.list_tools()
+                return {
+                    "result": {
+                        "tools": [
+                            {
+                                "name": tool.name,
+                                "description": tool.description,
+                                "inputSchema": tool.inputSchema
+                            }
+                            for tool in result.tools
+                        ]
+                    }
+                }
+
+            elif method == "tools/call":
+                # Enforce MCP: require initialize first
+                if not sess_state["initialized"]:
+                    return {
+                        "jsonrpc": "2.0",
+                        "id": request_data.get("id"),
+                        "error": {
+                            "code": -32000,
+                            "message": "Bad Request: Server not initialized"
+                        }
+                    }
                 tool_name = params.get("name")
                 if "arguments" in params:
                     arguments = params["arguments"]
@@ -152,24 +216,6 @@ def create_mcp_proxy_endpoint(app: FastAPI, api_dependency=None):
                         ]
                     }
                 }
-            elif method == "tools/list":
-                # ...existing code...
-                result = await session.list_tools()
-                return {
-                    "result": {
-                        "tools": [
-                            {
-                                "name": tool.name,
-                                "description": tool.description,
-                                "inputSchema": tool.inputSchema
-                            }
-                            for tool in result.tools
-                        ]
-                    }
-                }
-            elif method == "initialize":
-                # Compat: ignore/accept initialize from HTTP clients (e.g. n8n)
-                return {"result": {}}
             else:
                 raise HTTPException(status_code=400, detail=f"Unsupported method: {method}")
 
