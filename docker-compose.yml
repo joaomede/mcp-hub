@@ -8,14 +8,14 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # Defina MCP_HUB_API_KEY no .env para produção segura!
+      # Set MCP_HUB_API_KEY in .env for secure production!
       - MCP_HUB_API_KEY=${MCP_HUB_API_KEY:-change-me-in-prod}
       - MCP_HUB_LOG_LEVEL=warning
     volumes:
       - ./config:/app/config:ro
       - ./logs:/app/logs
-      # Para usar o servidor git, monte um repositório real:
-      # - /caminho/absoluto/para/seu/repo:/repo:ro
+      # To use the git server, mount a real repository:
+      # - /absolute/path/to/your/repo:/repo:ro
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health", "--max-time", "5"]
