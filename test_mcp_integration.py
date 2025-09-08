@@ -2,8 +2,32 @@
 """
 MCP Hub Integration Test
 
-Tests the MCP Hub container by connecting to aggregated MCP servers
-and inspecting their capabilities.
+Comprehensive integration testing for MCP Hub container functionality.
+
+This test validates:
+- Docker container lifecycle management
+- MCP server aggregation (memory, filesystem, time)
+- HTTP endpoint routing and accessibility
+- MCP protocol compliance and tool discovery
+- Health check functionality
+
+Usage:
+    # Build Docker image first
+    docker build -t mcp-hub:latest .
+    
+    # Run the integration test
+    python test_mcp_integration.py
+
+Expected Results:
+- Container starts successfully with health check passing
+- Multiple MCP servers are aggregated and accessible
+- Tools are discoverable via HTTP endpoints
+- MCP protocol is preserved end-to-end
+
+Test Configuration:
+- Uses test_config.json for real MCP server configuration
+- Tests memory, filesystem, and time MCP servers
+- Validates 20+ tools across multiple servers
 """
 
 import asyncio

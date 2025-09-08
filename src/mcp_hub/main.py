@@ -454,6 +454,12 @@ async def run(
     main_app.state.shutdown_handler = shutdown_handler
     main_app.state.path_prefix = path_prefix
 
+    # Add health check endpoint
+    @main_app.get("/health")
+    async def health_check():
+        """Health check endpoint for container readiness"""
+        return {"status": "healthy", "service": "mcp-hub"}
+
     main_app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_allow_origins or ["*"],

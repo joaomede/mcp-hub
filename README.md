@@ -1,12 +1,12 @@
 # ⚡️ MCP Hub
 
-**Pure MCP Gateway for aggregating multiple Model Context Protocol servers.**
+**Pure stdio MCP Gateway for aggregating multiple Model Context Protocol servers.**
 
-MCP Hub is a simplified, pure aggregator that runs multiple MCP servers through a single HTTP gateway. Unlike complex solutions, MCP Hub executes and manages all your MCP servers internally through stdio, exposing them through clean HTTP endpoints.
+MCP Hub is a simplified, pure stdio aggregator that runs multiple MCP servers through a single HTTP gateway. Unlike complex solutions, MCP Hub executes and manages all your MCP servers internally through stdio only, exposing them through clean HTTP endpoints.
 
-Pure MCP-to-MCP aggregation. No external servers. No hassle.
+Pure stdio MCP-to-MCP aggregation. No external servers. No complexity.
 
-> **Note**: This project is adapted from [mcpo](https://github.com/open-webui/mcpo) with a focus on **pure stdio MCP aggregation** rather than OpenAPI conversion, providing a clean gateway solution for MCP server management.
+> **Note**: This project is adapted from [mcpo](https://github.com/open-webui/mcpo) with a focus on **pure stdio MCP aggregation** rather than mixed transport support, providing a clean gateway solution for stdio MCP server management only.
 
 ## 🤔 Why Use MCP Hub?
 
@@ -58,17 +58,11 @@ mcp-hub --port 8000 --api-key "secret" -- uvx mcp-server-time --local-timezone=A
 mcp-hub --config config.json --hot-reload --port 8000 --api-key "secret"
 ```
 
-**SSE and HTTP MCP Servers:**
+**Multiple stdio MCP Servers (via config file):**
 
 ```bash
-# SSE MCP server
-mcp-hub --port 8000 --api-key "secret" --server-type "sse" -- http://127.0.0.1:8001/sse
-
-# With custom headers
-mcp-hub --port 8000 --api-key "secret" --server-type "sse" --header '{"Authorization": "Bearer token"}' -- http://127.0.0.1:8001/sse
-
-# Streamable HTTP MCP server  
-mcp-hub --port 8000 --api-key "secret" --server-type "streamable-http" -- http://127.0.0.1:8002/mcp
+# Use config file for multiple stdio MCP servers
+mcp-hub --config config.json --port 8000 --api-key "secret"
 ```
 
 You can also run MCP Hub via Docker with no installation:
@@ -123,7 +117,7 @@ mcp-hub --config /path/to/config.json
 mcp-hub --config /path/to/config.json --hot-reload
 ```
 
-**Example config.json:**
+**Example config.json (stdio MCP servers only):**
 
 ```json
 {
@@ -136,29 +130,22 @@ mcp-hub --config /path/to/config.json --hot-reload
       "command": "uvx",
       "args": ["mcp-server-time", "--local-timezone=America/New_York"]
     },
-    "mcp_sse": {
-      "type": "sse",
-      "url": "http://127.0.0.1:8001/sse",
-      "headers": {
-        "Authorization": "Bearer token",
-        "X-Custom-Header": "value"
-      }
-    },
-    "mcp_streamable_http": {
-      "type": "streamable-http",
-      "url": "http://127.0.0.1:8002/mcp"
+    "filesystem": {
+      "command": "uvx",
+      "args": ["mcp-server-filesystem", "--allowed-dir", "/tmp"]
     }
   }
 }
 ```
 
-Each MCP server will be accessible under its own unique route:
+Each stdio MCP server will be accessible under its own unique route:
 - **Memory tools**: `http://localhost:8000/memory/mcp`
 - **Time tools**: `http://localhost:8000/time/mcp`
-- **SSE server**: `http://localhost:8000/mcp_sse/mcp`
-- **HTTP server**: `http://localhost:8000/mcp_streamable_http/mcp`
+- **Filesystem tools**: `http://localhost:8000/filesystem/mcp`
 
 Connect your MCP client to any of these endpoints to access the tools from that specific server.
+
+📖 **For detailed usage instructions, examples, and best practices, see [USAGE.md](USAGE.md)**
 
 ## 🔧 Requirements
 
@@ -179,12 +166,28 @@ To contribute or run tests locally:
     uv sync --dev
     ```
 
-2.  **Run tests:**
+2.  **Run unit tests:**
     ```bash
     uv run pytest
     ```
 
-3.  **Running Locally with Active Changes:**
+3.  **Run integration tests:**
+    ```bash
+    # Build Docker image first
+    docker build -t mcp-hub:latest .
+    
+    # Run comprehensive integration test
+    python test_mcp_integration.py
+    ```
+    
+    The integration test validates:
+    - ✅ Container startup and health checks
+    - ✅ Multiple MCP server aggregation
+    - ✅ Tool discovery and availability
+    - ✅ HTTP endpoint routing (`/{server-name}/mcp/`)
+    - ✅ MCP protocol compliance
+
+4.  **Running Locally with Active Changes:**
 
     To run `mcp-hub` with your local modifications from a specific branch (e.g., `my-feature-branch`):
 
