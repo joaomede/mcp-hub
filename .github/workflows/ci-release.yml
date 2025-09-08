@@ -22,7 +22,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libffi-dev libssl-dev python3-dev
-      - name: Diagnostic: python & pip
+      - name: Diagnostic - python & pip
         run: |
           python --version
           python -c "import sys; print(sys.executable)"
