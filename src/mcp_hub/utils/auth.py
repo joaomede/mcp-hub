@@ -5,7 +5,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import base64
 
 from passlib.context import CryptContext
-from datetime import UTC, datetime, timedelta
+from datetime import timezone, datetime, timedelta
 
 import jwt
 from typing import Optional, Union, List, Dict
@@ -105,7 +105,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 #     payload = data.copy()
 
 #     if expires_delta:
-#         expire = datetime.now(UTC) + expires_delta
+#         expire = datetime.now(timezone.utc) + expires_delta
 #         payload.update({"exp": expire})
 
 #     encoded_jwt = jwt.encode(payload, SESSION_SECRET, algorithm=ALGORITHM)
